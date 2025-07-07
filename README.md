@@ -50,9 +50,29 @@ When we run this command we already have some things included in our download:
 So notice that we don't have to configure typescript anymore when we do this!
 
 Now this created expo-app contains boiler plate code which we want to get rid of so we run the command:
+(make sure you are CD in your actual app folder)
 ```cmd
 npm run reset-project
 ```
 
-This removes the boiler plate code and puts it in the folder: app-example
+This removes the boiler plate code and puts it in the folder: app-example (you do have to put y in the command line to agree to put an app-example there. You can also leave it out)
+
+## Initializing EAS
+Now that we have made our actual Expo app,   we need to initialise the EAS part of our application, which supports DEV mode (allowing native implementation and the other feateuures earlier mentioned)
+
+Make sure you have installed the latest EAS-CLI-client by doing the following command:
+```cmd
+npm install -g eas-cli
+```
+You can also use this command to check for uodates in the EAS-CLI.
+
+Now we will be loggin into EAS using the following command:
+```cmd
+eas login
+```
+If you do not yet have an account on the expo site, then make an account at the following link: https://expo.dev/
+If this happened correctly, then it should show you that you are logged in.
+
+
+
 
