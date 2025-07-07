@@ -1,78 +1,130 @@
-# App-Template
-This repo is meant to provide a template for quickly building apps. It implements the standard authentication necessary and gets you started right away with making the content of your apps. I refer to the README for further instructions
+# App Template
 
+This repository provides a template for quickly building mobile applications with standard authentication, enabling you to focus on developing your app's core content. Refer to this README for detailed instructions.
 
-# Dependencies
-The dependencies that we will be using in this project are listed below. It is very important to thus check whether the documentation for these dependencies is still relative to the packages installed. In this README I will have a full guide to making this template so that you can repeat this process yourself. I will include all the relevant links to the documentation so that you can check it yourself
+## Dependencies
 
-## Packages Used
-- Node.js: https://nodejs.org/en
-- React Native (JS framework that allows you to build mobile apps using React)
-- Expo (EAS): https://docs.expo.dev/tutorial/eas/introduction/
-- Tailwind / NativeWind: https://www.nativewind.dev/
-- TypeScript
-- Eslint: https://eslint.org/
-- Prettier: https://prettier.io/
-- GlueStack UI Library (optional): https://gluestack.io/
-- Supabase User Management System (optional): https://supabase.com/
+The following dependencies are used in this project. Always check the respective documentation to ensure compatibility with the installed package versions. This guide includes links to the official documentation for reference.
 
+### Packages Used
+- **Node.js**: [Official Documentation](https://nodejs.org/en)
+- **React Native**: JavaScript framework for building mobile apps using React.
+- **Expo (EAS)**: Platform for building and deploying apps. [Official Documentation](https://docs.expo.dev/tutorial/eas/introduction/)
+- **Tailwind / NativeWind**: Styling framework for React Native. [Official Documentation](https://www.nativewind.dev/)
+- **TypeScript**: Adds static typing to JavaScript.
+- **ESLint**: Linting tool for identifying and fixing code issues. [Official Documentation](https://eslint.org/)
+- **Prettier**: Code formatter for consistent style. [Official Documentation](https://prettier.io/)
+- **GlueStack UI Library** (optional): Component library for building UI. [Official Documentation](https://gluestack.io/)
+- **Supabase User Management System** (optional): Backend service for user authentication. [Official Documentation](https://supabase.com/)
 
-## Adviced additionals
-- Expo Orbit (used to manage and run expo apps): https://expo.dev/orbit
+### Recommended Additional Tools
+- **Expo Orbit**: Tool for managing and running Expo apps. [Official Documentation](https://expo.dev/orbit)
+- **Android Studio**: Emulator for Android development. [Official Documentation](https://developer.android.com/studio)
 
-! NOTE: Before we proceed you should know that this build is supported for both IOS and ANDROID but that Native Code is only explained in ANDROID since during the devlopment of this Repo, there was no access to the XCODE platform which would enable us to write native SWIFT code
+> **Note**: This template supports both iOS and Android. However, native code instructions are provided only for Android, as Xcode (required for iOS native Swift code) was not available during development.
 
+## Steps for Building the App
 
-# STEPS FOR MAKING THE APP
+### Creating the Expo App
 
-## Making the EXPO app
-For making our expo app we will be going to the expo website to launch our project. Now here we have to make some considerations:
-- Do we want to make an app that implements native code to get native functionality (such as retreiving screen time data)
+To start, visit the Expo website to set up your project. Consider whether your app requires native code for features like accessing screen time data:
 
-If yes then we have to go with Expo EAS (Expo Application Service), if not we have to go with Expo Classic. For this app we will be using the EAS verion because EAS can do everthing that the Expo can do but more. Here are some functionalities that EAS had and Expo has not:
-- Adding apps to the AppStore and PlayStore
-- Build Custome native code
-- Custom development clients
+- **Expo Classic**: Suitable for apps without native code requirements.
+- **Expo EAS (Expo Application Service)**: Recommended for this template, as it supports all Expo Classic features plus additional capabilities:
+  - Publishing apps to the App Store and Play Store.
+  - Custom native code integration.
+  - Custom development clients.
 
-On the websit of the EAS tutorial they specifiy the first command to be downloading the dev-client for your project. The problem is that we actually first have to make our expo project and then we will enable EAS for it. So First we will make an actual EXPO project:
+To create an Expo project, run the following command:
 
-```cmd
+```bash
 npx create-expo-app@latest your-app-name
 ```
 
-When we run this command we already have some things included in our download:
-- Creates a new React Native project with expo package installed
-- Includes recommended tools such as Expo CLI
-- Includes a tab navigator from Expo Router to provide a basic navigation system
-- Automatically configured to run a project on multiple platforms: Android, iOS, and web
-- TypeScript configured by default (important)
+This command sets up a new React Native project with the following included:
+- Expo package and CLI for development.
+- Expo Router for basic tab navigation.
+- Multi-platform support (Android, iOS, and web).
+- TypeScript configured by default.
 
-So notice that we don't have to configure typescript anymore when we do this!
+> **Note**: TypeScript is pre-configured, so no additional setup is required.
 
-Now this created expo-app contains boiler plate code which we want to get rid of so we run the command:
-(make sure you are CD in your actual app folder)
-```cmd
+To remove the default boilerplate code and replace it with a minimal structure, navigate to your app folder and run:
+
+```bash
 npm run reset-project
 ```
 
-This removes the boiler plate code and puts it in the folder: app-example (you do have to put y in the command line to agree to put an app-example there. You can also leave it out)
+This moves the boilerplate code to an `app-example` folder. Confirm by entering `y` when prompted.
 
-## Initializing EAS
-Now that we have made our actual Expo app,   we need to initialise the EAS part of our application, which supports DEV mode (allowing native implementation and the other feateuures earlier mentioned)
+### Initializing EAS
 
-Make sure you have installed the latest EAS-CLI-client by doing the following command:
-```cmd
+To enable EAS for native code support and advanced features, install the latest EAS CLI:
+
+```bash
 npm install -g eas-cli
 ```
-You can also use this command to check for uodates in the EAS-CLI.
 
-Now we will be loggin into EAS using the following command:
-```cmd
+Check for EAS CLI updates using the same command. Then, log in to your Expo account:
+
+```bash
 eas login
 ```
-If you do not yet have an account on the expo site, then make an account at the following link: https://expo.dev/
-If this happened correctly, then it should show you that you are logged in.
 
+If you don’t have an Expo account, create one at [expo.dev](https://expo.dev/). A successful login will display a confirmation.
 
+Configure the EAS build by running:
 
+```bash
+eas build:configure
+```
 
+This prompts:
+- Whether to create an EAS project for `@username/app-name` (default: `Y`).
+- Which platforms to configure for EAS Build (`All`, `iOS`, or `Android`).
+
+This generates an `eas.json` file with your EAS configuration.
+
+Next, install the Expo development client for custom builds:
+
+```bash
+npx expo install expo-dev-client
+```
+
+This module enables custom native code support, unlike the default Expo Go app.
+
+### Running the App
+
+Ensure Android Studio is installed for Android emulation. Run the app using:
+
+```bash
+expo run:android
+```
+
+or, for iOS (if applicable):
+
+```bash
+expo run:ios
+```
+
+When prompted, specify the Android package name (e.g., `com.username.your-app-name`). This command runs the Expo prebuild process, generating an `android` folder for native code if needed.
+
+#### **Error 1**
+Now during the running of this command we got an error that there was a similar theme name in the types. This was located at: 'expo-app_template/android/app/main/res/values/styles.xml' Here we could see to similar theme names: AppTheme, so we changed one to 'LightAppTheme'
+After doing this you have to navigiate to the Android folder ( \expo-app-template\android )in the project and then run the following command:
+
+```bash
+.\gradlew.bat clean
+
+```
+Then we again 'cd ..' out of the Andorid folder and into the expo-app-template folder and run the 'expo run:android' again
+
+#### **ERROR 2**
+Then we got another error which says that we cann't have the '.webp' format and the '.png' in one folder. So what we do is we move to the file path:
+- expo-app-template\android\app\src\main\res\
+Here we see all kinds of folders with mipmap.... What we have to do is delete either one of them. So only the '.png' or the '.webp'.
+
+#### **ERROR 3**
+Then you might also have another error which indicated a fault in the 'AndroidManifest.xml'. When we do all this it lists the package like so:
+- package="com.dirckmulder.expoapptemplate"
+Delete this to get rid of the error.
