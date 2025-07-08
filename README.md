@@ -128,3 +128,42 @@ Here we see all kinds of folders with mipmap.... What we have to do is delete ei
 Then you might also have another error which indicated a fault in the 'AndroidManifest.xml'. When we do all this it lists the package like so:
 - package="com.dirckmulder.expoapptemplate"
 Delete this to get rid of the error.
+
+#### **ERROR 4**
+Now this error is really annoying. It has to do with the path lengths of Windows and CMake. So when I tried it, it kept complaining about the Paths that were to long when running the command 'npx expo run:android', Now it did work using 'npx expo start'. So the question is: how do we solve this. Well to that I still don't have an answer (what I did is continued the rest using expo go until I got a valid answer from somewehre on the internet)
+
+### Configuring Prettier and Eslint
+Now in order to use Elint which is used to detect errors in your JS or TS code we use the command:
+```bash
+npx expo lint
+```
+
+#### **ERROR 5**
+Now when running this command you might run into an error that dictates that it cannot find the right folder. This is because you might have spaces in the folder path. So what you have to do is remove the spaces in the folder path. So for example if you have a folder called 'expo app template' you have to change it to 'expo-app-template'.
+
+This also creates a 'eslint.config.js' in the root of your file where the configuration for eslint is stored.
+
+Now in order to install prettier we will be using another command which is the following. First we install the package:
+```bash
+npx expo install prettier eslint-config-prettier eslint-plugin-prettier "--" --dev
+
+```
+
+Now additionally we have to update the 'eslint.config.js' file to include the following:
+```javascript
+const { defineConfig } = require('eslint/config');
+const expoConfig = require('eslint-config-expo/flat');
+const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
+
+module.exports = defineConfig([
+  expoConfig,
+  eslintPluginPrettierRecommended,
+  {
+    ignores: ['dist/*'],
+  },
+]);
+```
+This configuration extends the Expo ESLint configuration and includes Prettier as a plugin, ensuring that your code is both linted and formatted according to Prettier's rules. Now when you run `npx expo lint`, it will also check for Prettier formatting issues.
+
+What we want is that when we save a file it automatically formats the code. To do this we have to add a 'prettier.config.js' file in the root of your project with the following content:
+```javascript
