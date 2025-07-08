@@ -17,6 +17,7 @@ The following dependencies are used in this project. Always check the respective
 - **Prettier**: Code formatter for consistent style. [Official Documentation](https://prettier.io/)
 - **GlueStack UI Library** (optional): Component library for building UI. [Official Documentation](https://gluestack.io/)
 - **Supabase User Management System** (optional): Backend service for user authentication. [Official Documentation](https://supabase.com/)
+- **Lucid-react-native**: An icon library for React Native. [Official Documentation](https://lucide.dev/)
 
 ### Recommended Additional Tools
 
@@ -436,6 +437,12 @@ export default function Index() {
 
 Now you can find how to use the components in the website.
 
+Additionally we also install Lucide Icon library which is a library of icons that you can use in your app. You can install it by running the following command:
+
+```bash
+npx expo install lucide-react-native
+```
+
 **ERROR 6: Now in the Babel.config it could be that we are importing babel/nativewind twice, so delete on of them**
 
 ### Making Authentication with Supabase
@@ -463,8 +470,285 @@ Now we will first install the suopabse package:
 npx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill
 ```
 
-Then we will create a new file in the root of your project called `supabaseClient.ts`. This file will contain the configuration for the Supabase client. Add the following code to the file:
+Then we will create a new folder which is the utils folder. In this folder we create the file called `supabaseClient.ts`. This file will contain the configuration for the Supabase client. Add the following code to the file:
 
 ```typescript
+import "react-native-url-polyfill/auto";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = YOUR_REACT_NATIVE_SUPABASE_URL;
+const supabaseAnonKey = YOUR_REACT_NATIVE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
+```
+
+Now as you can see we need the ANON Key and the URL. You can find these in the Supabase dashboard under the "Settings" tab. Replace `YOUR_REACT_NATIVE_SUPABASE_URL` and `YOUR_REACT_NATIVE_SUPABASE_ANON_KEY` with your actual values. We store these value's in our `.env` file. So we create a `.env` file in the root of our project and add the following content:
+
+```env
+REACT_NATIVE_SUPABASE_URL=YOUR_REACT_NATIVE_SUPABASE_URL
+REACT_NATIVE_SUPABASE_ANON_KEY=YOUR_REACT_NATIVE_SUPABASE_ANON  _KEY
+```
+
+In order to use these values in our files we can do the following:
+
+```typescript
+const supabaseUrl = process.env.REACT_NATIVE_SUPABASE_URL;
+const supabaseAnonKey = process.env.REACT_NATIVE_SUPABASE_ANON_KEY;
+```
+
+We display this by displaying the value's in out index.tsx file.
+Now we will add the following files to our project which will contain our authentication logic:
+
+- utils/supabaseAuthoRefresh.ts
+- context/AuthenticationContext.tsx
+
+First in the utils folder we create the file called `supabaseAuthoRefresh.ts`. This file will contain the logic for refreshing the Supabase session. Add the following code to the file:
+
+```typescript
+// lib/supabaseAutoRefresh.ts
+import { AppState } from "react-native";
+import { supabase } from "./supabase";
+
+AppState.addEventListener("change", (state) => {
+  if (state === "active") {
+    supabase.auth.startAutoRefresh();
+  } else {
+    supabase.auth.stopAutoRefresh();
+  }
+});
+```
+
+Second you need to create a folder called `context` in the root of your project. In this folder we create the file called `AuthenticationContext.tsx`. This file will contain the context for the authentication state.
+In this file we will create the functions that we need for our authentication logic. Thus this will be the following functions:
+
+- `signUp`: for signing up a user
+- `signIn`: for signing in a user
+- `signOut`: for signing out a user
+- `resetPassword`: for resetting a user's password
+
+You can see the code for this in the authenticationContext.tsx file!
+
+Now we need to configure some things in the Supabse dashboard:
+
+1. Go to SQL Editor in the Supabase project dashboard.
+2. Click on QuickStart in the side bar
+3. Choose the User Management option
+
+This will give you the following SQL code:
+
+```sql
+-- Create a table for public profiles
+create table profiles (
+  id uuid references auth.users on delete cascade not null primary key,
+  updated_at timestamp with time zone,
+  username text unique,
+  full_name text,
+  avatar_url text,
+  website text,
+
+  constraint username_length check (char_length(username) >= 3)
+);
+-- Set up Row Level Security (RLS)
+-- See https://supabase.com/docs/guides/auth/row-level-security for more details.
+alter table profiles
+  enable row level security;
+
+create policy "Public profiles are viewable by everyone." on profiles
+  for select using (true);
+
+create policy "Users can insert their own profile." on profiles
+  for insert with check ((select auth.uid()) = id);
+
+create policy "Users can update own profile." on profiles
+  for update using ((select auth.uid()) = id);
+
+-- This trigger automatically creates a profile entry when a new user signs up via Supabase Auth.
+-- See https://supabase.com/docs/guides/auth/managing-user-data#using-triggers for more details.
+create function public.handle_new_user()
+returns trigger
+set search_path = ''
+as $$
+begin
+  insert into public.profiles (id, full_name, avatar_url)
+  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
+  return new;
+end;
+$$ language plpgsql security definer;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- Set up Storage!
+insert into storage.buckets (id, name)
+  values ('avatars', 'avatars');
+
+-- Set up access controls for storage.
+-- See https://supabase.com/docs/guides/storage#policy-examples for more details.
+create policy "Avatar images are publicly accessible." on storage.objects
+  for select using (bucket_id = 'avatars');
+
+create policy "Anyone can upload an avatar." on storage.objects
+  for insert with check (bucket_id = 'avatars');
+```
+
+Now as you can see this creates a profile for the user. We will make this profile when the user signs up. So we will use this in our `signUp` function in the `AuthenticationContext.tsx` file. We will also use the `auth.users` table to get the user information when the user signs in.
+
+**NOTE: If you want to add extra fields to the profile you can do this by adding the fields to the `profiles` table in the SQL code.**
+
+```SQL
+create table profiles (
+  id uuid references auth.users on delete cascade not null primary key,
+  updated_at timestamp with time zone,
+  username text unique,
+  full_name text,
+  avatar_url text,
+  website text,
+  // Add your extra fields here
+```
+
+Then you have to execute this query in the SQL editor in the Supabase dashboard. This will add the extra fields to the `profiles` table.
+
+#### Using the Authentication Context
+
+So Now we will be using the Authentication Context to wrap around the app so that you can only access the authentication functions in the app. We do this by wrapping the app in the `AuthenticationProvider` in the `app/_layout.tsx` file. This will make the authentication functions available in the whole app.
+
+```javascript
+import { Stack } from "expo-router";
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import { AuthProvider } from "@/context/authenticationContext";
+
+import "@/global.css";
+
+export default function RootLayout() {
+  return (
+    <GluestackUIProvider mode="light">
+      <AuthProvider>
+        <Stack />
+      </AuthProvider>
+    </GluestackUIProvider>
+  );
+}
+```
+##### Creating a Theme Context
+While we are at it we will also create a theme for the app using a context. This will allow us to easily switch between light and dark mode in the app. We will create a `themeContext.tsx` file in the `context` folder. This file will contain the theme context and the functions to switch between light and dark mode.
+
+We do this by creating a toggle function that will switch the theme between light and dark mode. We will also create a `ThemeProvider` that will wrap around the app in the `_layout.tsx` file. This will make the theme available in the whole app.
+
+Now this is a tricky one because be will be using the `useColorScheme` hook to let nativewind handle dark and light mode. So meaning that the context provider will give us the functioanlity to change the theme with the toggle function. But we will not be using the context to change the theme. Instead we will be using the `useColorScheme` hook to let nativewind handle the dark and light mode. Now Nativewind automatically detect whether parent components of the app are dark or light mode. So we will be using the `useColorScheme` hook to detect the current theme and then apply the ThemeWrapper. We then wrap the ThemeWrapper around the app so that the nativewind will handle the dark and light mode automatically. We use the following code for this:
+
+```javascript
+// RootLayout.tsx
+
+import { Stack } from 'expo-router';
+import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
+import { AuthProvider } from '@/context/authenticationContext';
+import { ThemeProvider, useTheme } from '@/context/themeContext';
+import { ThemeWrapper } from '@/components/ThemeWrapper';
+
+import '@/global.css';
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ThemeWrapper>
+        <InnerApp />
+      </ThemeWrapper>
+    </ThemeProvider>
+  );
+}
+
+// InnerApp is a child that consumes the theme context
+function InnerApp() {
+  const { colorScheme } = useTheme();
+
+  return (
+    // We still have to provide the light and dark mode to the GluestackUIProvider
+    <GluestackUIProvider mode={colorScheme}>
+      <AuthProvider>
+        <Stack />
+      </AuthProvider>
+    </GluestackUIProvider>
+  );
+}
 
 ```
+
+#### Creating Protected Routes
+
+In order to create the protected routes we will be creating two folders. One called: `àuth`, and one called `(app)`. The `auth` folder will contain the authentication routes and the `app` folder will contain the protected routes. We will be using the `useAuth` hook to check if the user is authenticated. If the user is not authenticated we will redirect the user to the login page.
+
+##### Pages
+
+we will create all the pages that we need for the authentication. We will create the following pages in the `auth` folder:
+
+- `login.tsx`: for the login page
+- `register.tsx`: for the registration page
+- `reset-password.tsx`: for the password reset page
+- `verify-email.tsx`: for the email verification page
+  We will also create a `components` folder in the `auth` folder which will contain the components for the authentication pages. This will contain the following components:
+- `RegisterForm.tsx`: for the registration form
+- `ProfileForm.tsx`: for the profile form
+
+Now in these files we will be using the functions from the `AuthenticationContext.tsx` file to handle the authentication logic. For example, in the `login.tsx` file we will use the `signIn` function to sign in the user. Take a look in the `auth` folder to see how the files are structured and how the authentication logic is implemented.
+
+##### Folders
+
+we need to create the `(app)` folder in which will again create another `_layout.tsx`. This will check whether the user is authenticated by validating the session. If the user is not authenticated, it will redirect the user to the login page.
+
+```javascript
+import { useAuth } from "@/context/authenticationContext";
+
+const { session, loading } = useAuth();
+
+// Redirect to login if not authenticated
+useEffect(() => {
+  if (!loading && !session) {
+    router.replace("../auth/login"); //You route might differ
+  }
+}, [loading, session]);
+```
+
+##### Login Page
+On the login page we will define the `useAUth` hook to access the authentication functions. We will create a form that allows the user to enter their email and password. When the user submits the form, we will call the `signIn` function from the `AuthenticationContext.tsx` file to sign in the user.
+
+##### Sign Up Page
+On the sign-up page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email, password, and other profile information. When the user submits the form, we will call the `signUp` function from the `AuthenticationContext.tsx` file to sign up the user.
+
+This is a little different from the login page because we will also create a profile for the user in the `profiles` table in the Supabase database. We will use the `supabase.from("profiles").insert()` function to insert the profile information into the `profiles` table. Because when the user signs up, we want to create a profile for the user in the `profiles` table. We will also use the `signIn` function to sign in the user after they have signed up.
+
+If the user decides not to finish their registration, we will not create a profile for the user. We will also handle the case where the user already exists in the database. If the user already exists, we will show an error message to the user.
+
+
+##### Reset Password Page
+On the reset password page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `resetPassword` function from the `AuthenticationContext.tsx` file to reset the user's password. This will send an email to the user with a link to reset their password.
+
+##### Verify Email Page
+On the verify email page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `verifyEmail` function from the `AuthenticationContext.tsx` file to send a verification email to the user. This will send an email to the user with a link to verify their email address.
+
+##### Default Header
+
+We will create a default header component to replace the current header. This heade rlives in the component folder and will be used to replace the standard header in the app. You can customize this header to your liking. The header will contain the following features:
+
+- A title for the app
+- A button to navigate to the profile page
+- Button to navigate to the Direct Messages page
+
+And the file is called the `DefaultHeader.tsx`. We will specify this header in the `_layout.tsx` file in the `(app)` folder. This will make the header available in all the pages in the app.
+
+```javascript
+<Stack
+  screenOptions={{
+    header: () => <DefaultHeader />,
+    headerShown: true,
+  }}
+>
+```
+
