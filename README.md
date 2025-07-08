@@ -22,6 +22,11 @@ The following dependencies are used in this project. Always check the respective
 
 - **Expo Orbit**: Tool for managing and running Expo apps. [Official Documentation](https://expo.dev/orbit)
 - **Android Studio**: Emulator for Android development. [Official Documentation](https://developer.android.com/studio)
+- **Visual Studio Code**: Recommended code editor with support for TypeScript, ESLint, and Prettier. [Official Documentation](https://code.visualstudio.com/)
+- **Git**: Version control system for managing code changes. [Official Documentation](https://git-scm.com/doc)
+- **GitHub**: Platform for hosting and sharing code repositories. [Official Documentation](https://docs.github.com/en)
+- **Expo Go**: App for running and testing Expo projects on mobile devices. [Official Documentation](https://docs.expo.dev/get-started/installation/)
+- **GlueStack VScode Extension**: Provides support for the GlueStack UI Library in Visual Studio Code. [Official Documentation](https://gluestack.io/ui/docs/home/getting-started/vscode-extensions)
 
 > **Note**: This template supports both iOS and Android. However, native code instructions are provided only for Android, as Xcode (required for iOS native Swift code) was not available during development.
 
@@ -32,6 +37,7 @@ The following dependencies are used in this project. Always check the respective
 ### 4. Configuring Prettier and ESLint
 ### 5. Configuring Tailwind CSS
 ### 6. Installing the GlueStack UI Library (optional)
+### 7. Making Authentication with Supabase
 
 
 
@@ -204,8 +210,10 @@ This configuration extends the Expo ESLint configuration and includes Prettier a
   "trailingComma": "all",
   "tabWidth": 2,
   "semi": true,
-  "printWidth": 80
+  "printWidth": 80,
+  "endOfLine": "lf"
 }
+
 ```
 
 Now what we want is that is format on save automatically. Now we configure this by editing the settings of the workspace. In your VScode editor type:
@@ -222,6 +230,9 @@ Then type 'settings' and select 'Preferences: Open Workspace Settings (JSON)'. T
   "editor.formatOnSave": true
 }
 ```
+
+**NOTE:If you are going to make changes to the Eslint or Prettier you can do:npx prettier --write.**
+
 
 ### Configuring Tailwind CSS
 
@@ -365,7 +376,80 @@ When opening the app you should see a blue box with the text "NativeWind is work
 
 NOTE: before doing this make sure you have committed all your changes because this might change some files in your project.
 
+Now we can install the GlueStack Library which will help us in building our UI
 Now this is optional, but if you want to use the GlueStack UI Library you can install it by running the following command:
 
 ```bash
+npx gluestack-ui init
 ```
+ This command will install the GlueStack UI Library and create a `gluestack.config.js` file in the root of your project. This file contains the configuration for the GlueStack UI Library.
+
+What you can see is that this changes the index.tsx file in the app folder. It adds the GlueStack UI Library provider to the app. So you can use the components from the GlueStack UI Library in your app.
+
+We can see a UI library appearing in our components folder. This is the GlueStack UI Library which contains all the components that you can use in your app. You first have to download these so that you can use them. You do this by running the command:
+
+```bash
+npx gluestack-ui add <component-name>
+```
+
+You can import these components in your app like so:
+
+```javascript
+import { Button } from "@/components/ui/button";
+```
+
+They will then appear in your components folder. Now here we used the Box as an example but you can use any component from the GlueStack UI Library. You can find the list of components in the [GlueStack UI Library documentation](https://gluestack.io/ui/docs/components/all-components).
+
+```bash
+npx gluestack-ui add box
+```
+**NOTE: If you want to use the extension you should first type 'gs-<compenent-name>' because this will automcomplete the right component with the extension and insert it into your code.**
+
+```javascript
+import { Text, View } from 'react-native';
+import TestComponent from '@/components/TestComponent';
+import { Box } from '@/components/ui/box';
+
+export default function Index() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <TestComponent />
+      <Box className="bg-blue-500 p-4 rounded"></Box>
+    </View>
+  );
+}
+
+```
+Now you can find how to use the components in the website.
+
+### Making Authentication with Supabase
+Now we will be making authentication with Supabase. This is optional but recommended if you want to have a user management system in your app.
+This will contain the following features:
+- User registration
+- User login
+- User logout
+- User profile management
+- User password reset
+- User email verification
+
+To get started, you need to create a Supabase account and a new project. Follow these steps:
+1. Go to [Supabase](https://supabase.com/) and create an account.
+2. Create a new project and choose a name for your project.
+3. Once your project is created, go to the "Authentication" tab and enable email authentication.
+4. Go to the "Settings" tab and copy your `Project URL` and `ANON Key`. You will need these to connect your app to Supabase.
+
+Now we will first install the suopabse package:
+```bash
+npx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill
+```
+
+Then we will create a new file in the root of your project called `supabaseClient.ts`. This file will contain the configuration for the Supabase client. Add the following code to the file:
+
+```typescript
