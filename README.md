@@ -163,7 +163,41 @@ module.exports = defineConfig([
   },
 ]);
 ```
-This configuration extends the Expo ESLint configuration and includes Prettier as a plugin, ensuring that your code is both linted and formatted according to Prettier's rules. Now when you run `npx expo lint`, it will also check for Prettier formatting issues.
+This configuration extends the Expo ESLint configuration and includes Prettier as a plugin, ensuring that your code is both linted and formatted according to Prettier's rules. Now when you run `npx expo lint`, it will also check for Prettier formatting issues. Additionally we should now make a '.prettierrc' file in the root of your project with the following content:
+```json
+{
+  "singleQuote": true,
+  "trailingComma": "all",
+  "tabWidth": 2,
+  "semi": true,
+  "printWidth": 80
+}
+```
 
-What we want is that when we save a file it automatically formats the code. To do this we have to add a 'prettier.config.js' file in the root of your project with the following content:
+Now what we want is that is format on save automatically. Now we configure this by editing the settings of the workspace. In your VScode editor type:
+```bash
+Ctrl + Shift + P
+```
+Then type 'settings' and select 'Preferences: Open Workspace Settings (JSON)'. Then add the following lines:
+```json 
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true
+}
+```
+
+### Configuring Tailwind CSS
+Now we are going to configure Tailwind CSS. First we install the package:
+```bash
+npm install nativewind react-native-reanimated@~3.17.4 react-native-safe-area-context@5.4.0
+npm install -D tailwindcss@^3.4.17 prettier-plugin-tailwindcss@^0.5.11
+```
+
+Then we initialize Tailwind CSS by running:
+```bash
+npx tailwindcss init
+``` 
+
+This will create a `tailwind.config.js` file in the root of your project. Now in this file we need to includ
+
 ```javascript
