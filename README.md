@@ -7,6 +7,7 @@ This repository provides a template for quickly building mobile applications wit
 The following dependencies are used in this project. Always check the respective documentation to ensure compatibility with the installed package versions. This guide includes links to the official documentation for reference.
 
 ### Packages Used
+
 - **Node.js**: [Official Documentation](https://nodejs.org/en)
 - **React Native**: JavaScript framework for building mobile apps using React.
 - **Expo (EAS)**: Platform for building and deploying apps. [Official Documentation](https://docs.expo.dev/tutorial/eas/introduction/)
@@ -18,12 +19,23 @@ The following dependencies are used in this project. Always check the respective
 - **Supabase User Management System** (optional): Backend service for user authentication. [Official Documentation](https://supabase.com/)
 
 ### Recommended Additional Tools
+
 - **Expo Orbit**: Tool for managing and running Expo apps. [Official Documentation](https://expo.dev/orbit)
 - **Android Studio**: Emulator for Android development. [Official Documentation](https://developer.android.com/studio)
 
 > **Note**: This template supports both iOS and Android. However, native code instructions are provided only for Android, as Xcode (required for iOS native Swift code) was not available during development.
 
 ## Steps for Building the App
+### 1. Creating the Expo App
+### 2. Initializing EAS
+### 3. Running the App
+### 4. Configuring Prettier and ESLint
+### 5. Configuring Tailwind CSS
+### 6. Installing the GlueStack UI Library (optional)
+
+
+
+Ensure you have the following installed:
 
 ### Creating the Expo App
 
@@ -42,6 +54,7 @@ npx create-expo-app@latest your-app-name
 ```
 
 This command sets up a new React Native project with the following included:
+
 - Expo package and CLI for development.
 - Expo Router for basic tab navigation.
 - Multi-platform support (Android, iOS, and web).
@@ -80,6 +93,7 @@ eas build:configure
 ```
 
 This prompts:
+
 - Whether to create an EAS project for `@username/app-name` (default: `Y`).
 - Which platforms to configure for EAS Build (`All`, `iOS`, or `Android`).
 
@@ -97,19 +111,26 @@ This module enables custom native code support, unlike the default Expo Go app.
 
 Ensure Android Studio is installed for Android emulation. Run the app using:
 
+**NOTE:Before doing this first read Error 4 that is listed under this header. If you experience this error you need to:
+- Delete Android folder again (if you already generated this using 'npx expo run:android')
+- Delete Node_Modules
+- run the command 'npm install' 
+- and then just run the app using 'npx expo start'**
+
 ```bash
-expo run:android
+npx expo run:android
 ```
 
 or, for iOS (if applicable):
 
 ```bash
-expo run:ios
+npx expo run:ios
 ```
 
 When prompted, specify the Android package name (e.g., `com.username.your-app-name`). This command runs the Expo prebuild process, generating an `android` folder for native code if needed.
 
 #### **Error 1**
+
 Now during the running of this command we got an error that there was a similar theme name in the types. This was located at: 'expo-app_template/android/app/main/res/values/styles.xml' Here we could see to similar theme names: AppTheme, so we changed one to 'LightAppTheme'
 After doing this you have to navigiate to the Android folder ( \expo-app-template\android )in the project and then run the following command:
 
@@ -117,53 +138,66 @@ After doing this you have to navigiate to the Android folder ( \expo-app-templat
 .\gradlew.bat clean
 
 ```
+
 Then we again 'cd ..' out of the Andorid folder and into the expo-app-template folder and run the 'expo run:android' again
 
 #### **ERROR 2**
+
 Then we got another error which says that we cann't have the '.webp' format and the '.png' in one folder. So what we do is we move to the file path:
+
 - expo-app-template\android\app\src\main\res\
-Here we see all kinds of folders with mipmap.... What we have to do is delete either one of them. So only the '.png' or the '.webp'.
+  Here we see all kinds of folders with mipmap.... What we have to do is delete either one of them. So only the '.png' or the '.webp'.
 
 #### **ERROR 3**
+
 Then you might also have another error which indicated a fault in the 'AndroidManifest.xml'. When we do all this it lists the package like so:
+
 - package="com.dirckmulder.expoapptemplate"
-Delete this to get rid of the error.
+  Delete this to get rid of the error.
 
 #### **ERROR 4**
+
 Now this error is really annoying. It has to do with the path lengths of Windows and CMake. So when I tried it, it kept complaining about the Paths that were to long when running the command 'npx expo run:android', Now it did work using 'npx expo start'. So the question is: how do we solve this. Well to that I still don't have an answer (what I did is continued the rest using expo go until I got a valid answer from somewehre on the internet)
 
 ### Configuring Prettier and Eslint
+
 Now in order to use Elint which is used to detect errors in your JS or TS code we use the command:
+
 ```bash
 npx expo lint
 ```
 
 #### **ERROR 5**
+
 Now when running this command you might run into an error that dictates that it cannot find the right folder. This is because you might have spaces in the folder path. So what you have to do is remove the spaces in the folder path. So for example if you have a folder called 'expo app template' you have to change it to 'expo-app-template'.
 
 This also creates a 'eslint.config.js' in the root of your file where the configuration for eslint is stored.
 
 Now in order to install prettier we will be using another command which is the following. First we install the package:
+
 ```bash
 npx expo install prettier eslint-config-prettier eslint-plugin-prettier "--" --dev
 
 ```
 
 Now additionally we have to update the 'eslint.config.js' file to include the following:
+
 ```javascript
-const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
-const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
+const { defineConfig } = require("eslint/config");
+const expoConfig = require("eslint-config-expo/flat");
+const eslintPluginPrettierRecommended = require("eslint-plugin-prettier/recommended");
 
 module.exports = defineConfig([
   expoConfig,
   eslintPluginPrettierRecommended,
   {
-    ignores: ['dist/*'],
+    ignores: ["dist/*"],
   },
 ]);
 ```
+
 This configuration extends the Expo ESLint configuration and includes Prettier as a plugin, ensuring that your code is both linted and formatted according to Prettier's rules. Now when you run `npx expo lint`, it will also check for Prettier formatting issues. Additionally we should now make a '.prettierrc' file in the root of your project with the following content:
+
 ```json
 {
   "singleQuote": true,
@@ -175,11 +209,14 @@ This configuration extends the Expo ESLint configuration and includes Prettier a
 ```
 
 Now what we want is that is format on save automatically. Now we configure this by editing the settings of the workspace. In your VScode editor type:
+
 ```bash
 Ctrl + Shift + P
 ```
+
 Then type 'settings' and select 'Preferences: Open Workspace Settings (JSON)'. Then add the following lines:
-```json 
+
+```json
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true
@@ -187,17 +224,148 @@ Then type 'settings' and select 'Preferences: Open Workspace Settings (JSON)'. T
 ```
 
 ### Configuring Tailwind CSS
+
 Now we are going to configure Tailwind CSS. First we install the package:
+
 ```bash
-npm install nativewind react-native-reanimated@~3.17.4 react-native-safe-area-context@5.4.0
-npm install -D tailwindcss@^3.4.17 prettier-plugin-tailwindcss@^0.5.11
+npm install nativewind react-native-reanimated react-native-safe-area-context
+npm install -D tailwindcss prettier-plugin-tailwindcss
 ```
 
 Then we initialize Tailwind CSS by running:
+
 ```bash
 npx tailwindcss init
-``` 
+```
 
-This will create a `tailwind.config.js` file in the root of your project. Now in this file we need to includ
+This will create a `tailwind.config.js` file in the root of your project. Now in this file we need to include all the folders in which we want to use Tailwind CSS. So we edit the file like so:
 
 ```javascript
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  // NOTE: Update this to include the paths to all files that contain Nativewind classes.
+  content: ["./App.tsx", "./components/**/*.{js,jsx,ts,tsx}"], // Put other paths here that contain Tailwind classes
+  presets: [require("nativewind/preset")],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+```
+
+Then we need to create a Globals.css file in the root of your project with the following content:
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+Then we need to create a `babel.config.js` file in the root of your project with the following content:
+
+```javascript
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: [
+      ["babel-preset-expo", { jsxImportSource: "nativewind" }],
+      "nativewind/babel",
+    ],
+  };
+};
+```
+
+Then if not already existent we create/modify the `metro.config.js` file in the root of your project with the following content:
+
+```javascript
+const { getDefaultConfig } = require("expo/metro-config");
+const { withNativeWind } = require("nativewind/metro");
+
+const config = getDefaultConfig(__dirname);
+
+module.exports = withNativeWind(config, { input: "./global.css" });
+```
+
+Then in our global `App.tsx` file we import the `Globals.css` file like so: (Now commonly you can import this global.css file in the \_layout.tsx file)
+
+```javascript
+import '@/global.css';
+
+export default App() {
+  /* Your App */
+}
+```
+
+Then in the app.json we need to specify that we are using the metro bundler by adding the following contents:
+
+```json
+{
+  "expo": {
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
+```
+
+Likely the expo -> web -> bundler is already there, so you just need to add the metro part.
+
+Then lastly we need to configure the typescript part in the nativewind-env.d.ts file. If this file does not exist you can create it in the root of your project. Then we add the following content:
+
+```typescript
+/// <reference types="nativewind/types" />
+```
+
+Now what we can do is try this out making a simple component. So we create a new file in the components folder called 'ExampleComponent.tsx'. We create our components folder in the root of our project if it does not exist yet. The component contains the following code:
+
+```javascript
+import { View, Text } from "react-native";
+
+export default function TestComponent() {
+  return (
+    <View className="bg-blue-500 p-4 rounded-xl">
+      <Text className="text-white text-lg font-bold">
+        NativeWind is working 🎉
+      </Text>
+    </View>
+  );
+}
+```
+
+Then we can import this component in our `app/index.tsx` file like so:
+
+```javascript
+import { Text, View } from "react-native";
+import TestComponent from "@/components/TestComponent";
+
+export default function Index() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text>Edit app/index.tsx to edit this screen.</Text>
+      <TestComponent />
+    </View>
+  );
+}
+```
+
+Now start the app to see if the tailwind applies, using the command:
+
+```bash
+npx expo start
+```
+When opening the app you should see a blue box with the text "NativeWind is working 🎉" in white text.
+
+### 6. Installing the GlueStack UI Library (optional)
+
+NOTE: before doing this make sure you have committed all your changes because this might change some files in your project.
+
+Now this is optional, but if you want to use the GlueStack UI Library you can install it by running the following command:
+
+```bash
+```
