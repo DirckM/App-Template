@@ -31,15 +31,20 @@ The following dependencies are used in this project. Always check the respective
 > **Note**: This template supports both iOS and Android. However, native code instructions are provided only for Android, as Xcode (required for iOS native Swift code) was not available during development.
 
 ## Steps for Building the App
+
 ### 1. Creating the Expo App
+
 ### 2. Initializing EAS
+
 ### 3. Running the App
+
 ### 4. Configuring Prettier and ESLint
+
 ### 5. Configuring Tailwind CSS
+
 ### 6. Installing the GlueStack UI Library (optional)
+
 ### 7. Making Authentication with Supabase
-
-
 
 Ensure you have the following installed:
 
@@ -117,11 +122,12 @@ This module enables custom native code support, unlike the default Expo Go app.
 
 Ensure Android Studio is installed for Android emulation. Run the app using:
 
-**NOTE:Before doing this first read Error 4 that is listed under this header. If you experience this error you need to:
+\*\*NOTE:Before doing this first read Error 4 that is listed under this header. If you experience this error you need to:
+
 - Delete Android folder again (if you already generated this using 'npx expo run:android')
 - Delete Node_Modules
-- run the command 'npm install' 
-- and then just run the app using 'npx expo start'**
+- run the command 'npm install'
+- and then just run the app using 'npx expo start'\*\*
 
 ```bash
 npx expo run:android
@@ -213,7 +219,6 @@ This configuration extends the Expo ESLint configuration and includes Prettier a
   "printWidth": 80,
   "endOfLine": "lf"
 }
-
 ```
 
 Now what we want is that is format on save automatically. Now we configure this by editing the settings of the workspace. In your VScode editor type:
@@ -232,7 +237,6 @@ Then type 'settings' and select 'Preferences: Open Workspace Settings (JSON)'. T
 ```
 
 **NOTE:If you are going to make changes to the Eslint or Prettier you can do:npx prettier --write.**
-
 
 ### Configuring Tailwind CSS
 
@@ -370,6 +374,7 @@ Now start the app to see if the tailwind applies, using the command:
 ```bash
 npx expo start
 ```
+
 When opening the app you should see a blue box with the text "NativeWind is working 🎉" in white text.
 
 ### 6. Installing the GlueStack UI Library (optional)
@@ -382,7 +387,8 @@ Now this is optional, but if you want to use the GlueStack UI Library you can in
 ```bash
 npx gluestack-ui init
 ```
- This command will install the GlueStack UI Library and create a `gluestack.config.js` file in the root of your project. This file contains the configuration for the GlueStack UI Library.
+
+This command will install the GlueStack UI Library and create a `gluestack.config.js` file in the root of your project. This file contains the configuration for the GlueStack UI Library.
 
 What you can see is that this changes the index.tsx file in the app folder. It adds the GlueStack UI Library provider to the app. So you can use the components from the GlueStack UI Library in your app.
 
@@ -403,20 +409,21 @@ They will then appear in your components folder. Now here we used the Box as an 
 ```bash
 npx gluestack-ui add box
 ```
+
 **NOTE: If you want to use the extension you should first type 'gs-<compenent-name>' because this will automcomplete the right component with the extension and insert it into your code.**
 
 ```javascript
-import { Text, View } from 'react-native';
-import TestComponent from '@/components/TestComponent';
-import { Box } from '@/components/ui/box';
+import { Text, View } from "react-native";
+import TestComponent from "@/components/TestComponent";
+import { Box } from "@/components/ui/box";
 
 export default function Index() {
   return (
     <View
       style={{
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
       <Text>Edit app/index.tsx to edit this screen.</Text>
@@ -425,13 +432,17 @@ export default function Index() {
     </View>
   );
 }
-
 ```
+
 Now you can find how to use the components in the website.
 
+**ERROR 6: Now in the Babel.config it could be that we are importing babel/nativewind twice, so delete on of them**
+
 ### Making Authentication with Supabase
+
 Now we will be making authentication with Supabase. This is optional but recommended if you want to have a user management system in your app.
 This will contain the following features:
+
 - User registration
 - User login
 - User logout
@@ -440,12 +451,14 @@ This will contain the following features:
 - User email verification
 
 To get started, you need to create a Supabase account and a new project. Follow these steps:
+
 1. Go to [Supabase](https://supabase.com/) and create an account.
 2. Create a new project and choose a name for your project.
 3. Once your project is created, go to the "Authentication" tab and enable email authentication.
 4. Go to the "Settings" tab and copy your `Project URL` and `ANON Key`. You will need these to connect your app to Supabase.
 
 Now we will first install the suopabse package:
+
 ```bash
 npx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill
 ```
@@ -453,3 +466,5 @@ npx expo install @supabase/supabase-js @react-native-async-storage/async-storage
 Then we will create a new file in the root of your project called `supabaseClient.ts`. This file will contain the configuration for the Supabase client. Add the following code to the file:
 
 ```typescript
+
+```
