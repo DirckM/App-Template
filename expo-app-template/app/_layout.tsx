@@ -1,6 +1,6 @@
 // RootLayout.tsx
 
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { AuthProvider } from '@/context/authenticationContext';
 import { ThemeProvider, useTheme } from '@/context/themeContext';
@@ -25,7 +25,7 @@ function InnerApp() {
   return (
     <GluestackUIProvider mode={colorScheme}>
       <AuthProvider>
-        <Stack />
+        <Slot />
       </AuthProvider>
     </GluestackUIProvider>
   );

@@ -3,22 +3,45 @@ import { useAuth } from '@/context/authenticationContext';
 import '@/global.css';
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { supabase } from '@/lib/utils/supabaseClient';
 
 export default function TabLayout() {
   const { session, loading } = useAuth();
+  const [checkingProfile, setCheckingProfile] = useState(true);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
+    const checkProfileCompletion = async () => {
+      if (!loading && session) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('username, full_name')
+          .eq('id', session.user.id)
+          .single();
+
+        const isIncomplete =
+          !profile || !profile.username || !profile.full_name;
+
+        if (isIncomplete) {
+          router.replace('/auth/complete-profile');
+        } else {
+          setCheckingProfile(false); // We're ready to show the app
+        }
+      }
+    };
+
+    if (!loading && session) {
+      checkProfileCompletion();
+    }
+
     if (!loading && !session) {
       router.replace('/auth/login');
     }
   }, [loading, session]);
 
-  // Don't render layout until fonts + auth state are ready
-  if (loading || !session) return null;
+  if (loading || !session || checkingProfile) return null;
 
   return (
     <SafeAreaProvider>
@@ -29,7 +52,12 @@ export default function TabLayout() {
         }}
       >
         {/* We can add all the screens that we want in our app here using : <Stack.Screen name="messages" /> */}
-        <Stack.Screen name="index" />
+        <Stack.Screen
+          name="index"
+          options={{
+            title: '', // <- removes the default title
+          }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </SafeAreaProvider>

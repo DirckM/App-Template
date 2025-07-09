@@ -3,7 +3,7 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Input, InputField } from '@/components/ui/input';
 import { VStack } from '@/components/ui/vstack';
-import { supabase } from '@/utils/supabaseClient';
+import { supabase } from '@/lib/utils/supabaseClient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
@@ -26,7 +26,7 @@ export default function LoginScreen() {
     if (error) {
       Alert.alert('Error', error.message);
     } else {
-      router.replace('/(app)');
+      router.replace('/(app)/(tabs)');
     }
   };
 
@@ -41,7 +41,7 @@ export default function LoginScreen() {
 
         <Input variant="outline" size="md" className="mb-4">
           <InputField
-            className="text-base"
+            className="text-base text-black"
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
@@ -53,7 +53,7 @@ export default function LoginScreen() {
 
         <Input variant="outline" size="md" className="mb-4">
           <InputField
-            className="text-base"
+            className="text-base, text-black"
             placeholder="Password"
             value={password}
             onChangeText={setPassword}

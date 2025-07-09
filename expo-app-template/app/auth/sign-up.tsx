@@ -1,47 +1,86 @@
-// screens/signup.tsx
-
-
-//Now it is good to notice that in this file we are going through two steps:
-// 1. The user signs up with their email and password
-// 2. The user fills out their profile information
-// After the user completes their profile, they are redirected to the main app.
-
+import { Box } from '@/components/ui/box';
 import { useAuth } from '@/context/authenticationContext';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { View } from 'react-native';
-import ProfileForm from './components/ProfileForm';
-import SignupForm from './components/SignupForm';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
+import { Input, InputField } from '@/components/ui/input';
+import { VStack } from '@/components/ui/vstack';
 
 export default function SignUpScreen() {
   const { signUpNewUser } = useAuth();
   const router = useRouter();
-
-  //We are first signing up the user, then we are going to the profile form
-  const [step, setStep] = useState(1); // 1 = auth, 2 = profile
   const [userId, setUserId] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Once the user is signed up, we are going to the profile form
   const handleAuthSuccess = (newUserId: string) => {
     setUserId(newUserId);
-    setStep(2);
   };
 
-  // Once the profile is complete, we are going to the app
-  const handleProfileComplete = () => {
-    router.replace('/(app)/(tabs)');
+  const goToLogin = () => {
+    router.push('/auth/login');
+  };
+
+  const handleSignUp = async () => {
+    setLoading(true);
+    try {
+      const result = await signUpNewUser(email, password);
+      if (result.success && result.data?.user?.id) {
+        router.replace('/auth/complete-profile');
+      } else {
+        alert(result.error?.message || 'Unknown signup error');
+      }
+    } catch (err) {
+      alert('Signup error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <View className="flex-1 justify-center px-6 bg-white">
-      {step === 1 ? (
-        <SignupForm
-          onSuccess={handleAuthSuccess}
-          signUpNewUser={signUpNewUser}
-        />
-      ) : userId ? (
-        <ProfileForm userId={userId} onComplete={handleProfileComplete} />
-      ) : null}
-    </View>
+    <Box className="flex-1 justify-center px-6 bg-white">
+      <VStack space="lg">
+        <Text className="text-2xl font-bold text-center mb-4">Sign Up</Text>
+
+        <Input variant="outline" size="md" className="mb-4">
+          <InputField
+            className="text-base text-black"
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholderTextColor="#999"
+          />
+        </Input>
+
+        <Input variant="outline" size="md" className="mb-6">
+          <InputField
+            className="text-base text-black"
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#999"
+          />
+        </Input>
+
+        <Button
+          onPress={handleSignUp}
+          isDisabled={loading}
+          className="mb-4 bg-blue-500"
+        >
+          <ButtonText className="text-white">
+            {loading ? 'Creating Account...' : 'Sign Up'}
+          </ButtonText>
+        </Button>
+
+        <Button variant="link" onPress={goToLogin}>
+          <ButtonText className="text-black">Go to Login</ButtonText>
+        </Button>
+      </VStack>
+    </Box>
   );
 }

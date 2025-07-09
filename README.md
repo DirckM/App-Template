@@ -470,7 +470,7 @@ Now we will first install the suopabse package:
 npx expo install @supabase/supabase-js @react-native-async-storage/async-storage react-native-url-polyfill
 ```
 
-Then we will create a new folder which is the utils folder. In this folder we create the file called `supabaseClient.ts`. This file will contain the configuration for the Supabase client. Add the following code to the file:
+Then we will create a new folder which is the utils folder. First we will make the lib folder. Then in the lib folder we create the utils folder. In this folder we create the file called `supabaseClient.ts`. This file will contain the configuration for the Supabase client. Add the following code to the file:
 
 ```typescript
 import "react-native-url-polyfill/auto";
@@ -507,7 +507,7 @@ const supabaseAnonKey = process.env.REACT_NATIVE_SUPABASE_ANON_KEY;
 We display this by displaying the value's in out index.tsx file.
 Now we will add the following files to our project which will contain our authentication logic:
 
-- utils/supabaseAuthoRefresh.ts
+- lib/utils/supabaseAuthoRefresh.ts
 - context/AuthenticationContext.tsx
 
 First in the utils folder we create the file called `supabaseAuthoRefresh.ts`. This file will contain the logic for refreshing the Supabase session. Add the following code to the file:
@@ -681,9 +681,27 @@ function InnerApp() {
 
 ```
 
-#### Creating Protected Routes
+##### Creating Global types
+Now we will create a global types file in the root of our project. This file will contain the types for the app. We will create a `global.d.ts` file in the `lib/utils/types` of our project. This file will contain the types for the app. We will also create a `globals.d.ts` file in the root of our project. This file will contain the global types for the app. In this file we will define all the types that we will use in the app. This will include the types for the user, profile, and theme. We will also create a `supabase.d.ts` file in the `lib/utils/types` folder. This file will contain the types for the Supabase client.
+
+```typescript
+export interface UserProfile {
+  id: string; // UUID of the user
+  updated_at: string; // Timestamp of the last update
+  username: string; // Unique username for the user
+  full_name?: string; // Full name of the user (optional)
+  avatar_url?: string; // URL to the user's avatar image (optional)
+  website?: string; // User's personal or professional website (optional)
+}
+```
+
+This will be the profile type that we will use in the app. Now you can add more types just like this one in the `global.d.ts` file
+
+##### Creating Protected Routes
 
 In order to create the protected routes we will be creating two folders. One called: `àuth`, and one called `(app)`. The `auth` folder will contain the authentication routes and the `app` folder will contain the protected routes. We will be using the `useAuth` hook to check if the user is authenticated. If the user is not authenticated we will redirect the user to the login page.
+
+In the `(app)/layout.tsx` file we will check if the user is authenticated by validating the session. If the user is not authenticated, we will redirect the user to the login page. We will also create a `DefaultHeader.tsx` file in the `components` folder which will be used as the default header for the app. This will be explained in a later section.
 
 ##### Pages
 
@@ -716,6 +734,13 @@ useEffect(() => {
 }, [loading, session]);
 ```
 
+At the same time we also create the (tabs) filder in which we will create the tabs for the app. This will contain the following files:
+- `index.tsx`: for the home page
+- `profile.tsx`: for the profile page
+- and any other additional pages that you want to add to the tabs.
+
+In the `_layout` in the tabs you can see by the comment how you are able to add another tab to the. Now for any other additional other pages which you don't want to add to the tabs/ navigation bar, we can just put them in the (app) folder. This will make them accessible via the URL but not via the navigation bar.
+
 ##### Login Page
 On the login page we will define the `useAUth` hook to access the authentication functions. We will create a form that allows the user to enter their email and password. When the user submits the form, we will call the `signIn` function from the `AuthenticationContext.tsx` file to sign in the user.
 
@@ -726,6 +751,7 @@ This is a little different from the login page because we will also create a pro
 
 If the user decides not to finish their registration, we will not create a profile for the user. We will also handle the case where the user already exists in the database. If the user already exists, we will show an error message to the user.
 
+**NOTE: Now for the Connecting the Sign Up the flow is logic. We create an account first and then move to the additional profile info. If people anbandon this profile filling in details, you still have their email. We can use this to send emails about their account not being finished**
 
 ##### Reset Password Page
 On the reset password page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `resetPassword` function from the `AuthenticationContext.tsx` file to reset the user's password. This will send an email to the user with a link to reset their password.
@@ -733,7 +759,7 @@ On the reset password page we will also define the `useAuth` hook to access the 
 ##### Verify Email Page
 On the verify email page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `verifyEmail` function from the `AuthenticationContext.tsx` file to send a verification email to the user. This will send an email to the user with a link to verify their email address.
 
-##### Default Header
+#### Default Header
 
 We will create a default header component to replace the current header. This heade rlives in the component folder and will be used to replace the standard header in the app. You can customize this header to your liking. The header will contain the following features:
 
