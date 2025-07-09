@@ -19,7 +19,12 @@ type AuthContextType = {
     password: string,
   ) => Promise<{ success: boolean; data?: any; error?: any }>;
   signOut: () => Promise<{ success: boolean; data?: any; error?: any }>;
-  resetPassword: (email: string) => Promise<{ success: boolean; error?: any }>;
+  resetPassword: (
+    email: string,
+    options?: { redirectTo?: string },
+  ) => Promise<{ success: boolean; error?: any }>;
+  validateEmail: (email: string) => boolean;
+  validatePassword: (password: string) => boolean;
   loading: boolean;
 };
 
@@ -30,6 +35,8 @@ const AuthContext = createContext<AuthContextType>({
   signInUser: async () => ({ success: false, data: null, error: null }),
   signOut: async () => ({ success: false, data: null, error: null }),
   resetPassword: async () => ({ success: false, error: null }),
+  validateEmail: () => false,
+  validatePassword: () => false,
   loading: true,
 });
 
@@ -82,6 +89,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  //This is the function that will be used to validate the email
+  const validateEmail = (str: string) => {
+    if (!str) return false;
+    const pattern =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return pattern.test(str);
+  };
+
+  //This is the function that will be used to validate the email
+  const validatePassword = (str: string): boolean => {
+    if (!str) return false;
+    // At least 8 characters, and at least one special character
+    const pattern =
+      /^(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
+
+    return pattern.test(str);
+  };
+
   //This is the function that will be used to sign up a new user
   const signUpNewUser = async (email: string, password: string) => {
     try {
@@ -122,9 +147,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = async (
+    email: string,
+    options?: { redirectTo?: string },
+  ) => {
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: options?.redirectTo, // pass it if provided
+      });
       if (error) {
         console.error('Error sending reset password email:', error.message);
         return { success: false, error };
@@ -144,6 +174,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signInUser,
         signOut,
         resetPassword,
+        validateEmail,
+        validatePassword,
         loading,
       }}
     >

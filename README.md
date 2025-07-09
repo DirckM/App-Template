@@ -435,7 +435,11 @@ export default function Index() {
 }
 ```
 
-Now you can find how to use the components in the website.
+Now you can find how to use the components in the website. In order to not have to specify each component on the imports like we are doing now, we will make an `index.tsx` file in the `components/ui` folder. This file will export all the components that you want to use in your app. So you can import them like so:
+
+```javascript
+
+```
 
 Additionally we also install Lucide Icon library which is a library of icons that you can use in your app. You can install it by running the following command:
 
@@ -474,7 +478,7 @@ Then we will create a new folder which is the utils folder. First we will make t
 
 ```typescript
 import "react-native-url-polyfill/auto";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import storage from import storage from '@/lib/utils/storageMethod';
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = YOUR_REACT_NATIVE_SUPABASE_URL;
@@ -482,7 +486,7 @@ const supabaseAnonKey = YOUR_REACT_NATIVE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
@@ -525,6 +529,31 @@ AppState.addEventListener("change", (state) => {
   }
 });
 ```
+
+Additionally we need to create a file called `storageMethod.ts` in the lib/utils folder. This file will contain the storage method for the Supabase client. Add the following code to the file:
+
+```typescript
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+type StorageType = {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+  removeItem(key: string): Promise<void>;
+};
+
+const WebStorage: StorageType = {
+  getItem: (key) => Promise.resolve(window.localStorage.getItem(key)),
+  setItem: (key, value) =>
+    Promise.resolve(window.localStorage.setItem(key, value)),
+  removeItem: (key) => Promise.resolve(window.localStorage.removeItem(key)),
+};
+
+const storage: StorageType = Platform.OS === 'web' ? WebStorage : AsyncStorage;
+
+export default storage;
+```
+Now we do this because on web and on app there are different storage methods. On web we use the localStorage and on app we use the AsyncStorage. So we create a storage method that will work on both platforms.
 
 Second you need to create a folder called `context` in the root of your project. In this folder we create the file called `AuthenticationContext.tsx`. This file will contain the context for the authentication state.
 In this file we will create the functions that we need for our authentication logic. Thus this will be the following functions:
@@ -753,7 +782,25 @@ If the user decides not to finish their registration, we will not create a profi
 
 **NOTE: Now for the Connecting the Sign Up the flow is logic. We create an account first and then move to the additional profile info. If people anbandon this profile filling in details, you still have their email. We can use this to send emails about their account not being finished**
 
+##### Forgot Password Page
+On the forgot password page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `resetPassword` function from the `AuthenticationContext.tsx` file to send a password reset email to the user. This will send an email to the user with a link to reset their password.
+
 ##### Reset Password Page
+Now for the reset password page we need to define the route in our supabase project on the dashboard. We do this by going to the "Authentication" tab and then to the "URL Configuration" tab. Here we can set the redirect URL for the password reset page. This is the URL that the user will be redirected to when they click on the link in the password reset email. We will set this to the URL of our app's reset password page.
+
+Then what we need to add to our `app.json` is enabling the deep link funtionality. This will allow us to handle the deep link when the user clicks on the link in the password reset email. Deep link is a way to link to a specific page in your app from an external source, such as an email or a website. We will add the following code to our `app.json` file:
+
+```json
+{
+  "expo": {
+    "scheme": "your-app-scheme",
+    "platforms": ["android", "ios"],
+    "deepLinking": true,
+    "deepLinks": ["expoapptemplate://"],
+  }
+}
+```
+
 On the reset password page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `resetPassword` function from the `AuthenticationContext.tsx` file to reset the user's password. This will send an email to the user with a link to reset their password.
 
 ##### Verify Email Page

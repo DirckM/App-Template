@@ -8,6 +8,8 @@
     "scheme": "expoapptemplate",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "deepLinking": true,
+    "deepLinks": ["expoapptemplate://"],
     "ios": {
       "supportsTablet": true
     },

@@ -8,7 +8,7 @@ import { Input, InputField } from '@/components/ui/input';
 import { VStack } from '@/components/ui/vstack';
 
 export default function SignUpScreen() {
-  const { signUpNewUser } = useAuth();
+  const { signUpNewUser, validateEmail, validatePassword } = useAuth();
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState('');
@@ -24,6 +24,20 @@ export default function SignUpScreen() {
   };
 
   const handleSignUp = async () => {
+    if (!validateEmail(email)) {
+      alert('Please enter a valid email address.');
+      console.error('Invalid email format:', email);
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      alert(
+        'Password must be at least 8 characters long and include at least one special character.',
+      );
+      console.error('Invalid password format:', password);
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await signUpNewUser(email, password);
