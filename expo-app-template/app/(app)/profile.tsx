@@ -13,7 +13,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [profile, setProfile] = useState<{
     username: string;
-    full_name: string;
+    firstname: string;
   } | null>(null);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function ProfileScreen() {
       if (session) {
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, full_name')
+          .select('username, firstname')
           .eq('id', session.user.id)
           .single();
 
@@ -53,7 +53,7 @@ export default function ProfileScreen() {
         <Text className="text-lg">Email: {session?.user?.email}</Text>
         <Text className="text-lg">Username: {profile?.username ?? 'N/A'}</Text>
         <Text className="text-lg">
-          Full Name: {profile?.full_name ?? 'N/A'}
+          Full Name: {profile?.firstname ?? 'N/A'}
         </Text>
 
         <Button className="mt-8 bg-red-200" onPress={handleLogout}>

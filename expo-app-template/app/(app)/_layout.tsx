@@ -17,12 +17,13 @@ export default function TabLayout() {
       if (!loading && session) {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('username, full_name')
+          .select('username')
           .eq('id', session.user.id)
           .single();
 
-        const isIncomplete =
-          !profile || !profile.username || !profile.full_name;
+        console.log('Profile data:', profile);
+
+        const isIncomplete = !profile || !profile.username;
 
         if (isIncomplete) {
           router.replace('/auth/complete-profile');

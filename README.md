@@ -435,11 +435,7 @@ export default function Index() {
 }
 ```
 
-Now you can find how to use the components in the website. In order to not have to specify each component on the imports like we are doing now, we will make an `index.tsx` file in the `components/ui` folder. This file will export all the components that you want to use in your app. So you can import them like so:
-
-```javascript
-
-```
+Now you can find how to use the components in the website. In order to not have to specify each component on the imports like we are doing now, we will make an `index.tsx` file in the `components/ui` folder.
 
 Additionally we also install Lucide Icon library which is a library of icons that you can use in your app. You can install it by running the following command:
 
@@ -533,8 +529,8 @@ AppState.addEventListener("change", (state) => {
 Additionally we need to create a file called `storageMethod.ts` in the lib/utils folder. This file will contain the storage method for the Supabase client. Add the following code to the file:
 
 ```typescript
-import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type StorageType = {
   getItem(key: string): Promise<string | null>;
@@ -549,10 +545,11 @@ const WebStorage: StorageType = {
   removeItem: (key) => Promise.resolve(window.localStorage.removeItem(key)),
 };
 
-const storage: StorageType = Platform.OS === 'web' ? WebStorage : AsyncStorage;
+const storage: StorageType = Platform.OS === "web" ? WebStorage : AsyncStorage;
 
 export default storage;
 ```
+
 Now we do this because on web and on app there are different storage methods. On web we use the localStorage and on app we use the AsyncStorage. So we create a storage method that will work on both platforms.
 
 Second you need to create a folder called `context` in the root of your project. In this folder we create the file called `AuthenticationContext.tsx`. This file will contain the context for the authentication state.
@@ -565,85 +562,306 @@ In this file we will create the functions that we need for our authentication lo
 
 You can see the code for this in the authenticationContext.tsx file!
 
-Now we need to configure some things in the Supabse dashboard:
+Now we need to configure the other tables in the Supabase. Now you can choose your own ORM to define a schema that we can upload to Supabase. What we will be using for this app is Drizzle. In order to set up the Drizzle ORM we move to the next chapter
 
-1. Go to SQL Editor in the Supabase project dashboard.
-2. Click on QuickStart in the side bar
-3. Choose the User Management option
+##### Setting up Drizzle
 
-This will give you the following SQL code:
+Now there are a view things to note here before we get started. During the making of this tutorial I choose the User Management QuickStart, which you should not do when you want a blank project. What this does it creates all these triggers and policies which are going to be dependent on the `auth` table. This will cause it to fail when sending requests to the database because these triggers and policies do not contain the fields that you need for your custom DB setup. So make sure you delete these first.
+
+Now in order to set up Drizzle we go to our root and create a `db` folder. In this folder we will create the files
+
+- `schema.ts` (Will define the DB schema and export the db types (yes this is possible))
+- `drizzle.ts` (This will connect out Drizzle with Supabase)
+- `drizzle.config.js` (setup the connection with the database)
+
+Now what Drizzle Basically does is it wraps Supabase. So since Supabase doesn't handle direct types from the DB and handle querues better. So what we want to do is define our schema in the schemma.ts. Then we want to connect the app with supabase in the drizzle.ts and then lastly in the drizzle.config.js we will configure drizzle preferences.
+
+Now we have the following commands we need to run in order to get the right dependencies:
+
+```bash
+npm i drizzle-orm
+npm i -D drizzle-kit
+npm i postgres
+```
+
+##### Step 1: Create the Database Schema
+
+First, let's create our database schema in `db/schema.ts`:
+
+```typescript
+import { pgTable, text, timestamp, date } from "drizzle-orm/pg-core";
+
+// Profile table
+export const profiles = pgTable("profiles", {
+  id: text("id").primaryKey(), // This will reference Supabase auth.users.id
+  username: text("username").unique().notNull(),
+  first_name: text("firstname").notNull(),
+  last_name: text("lastname").notNull(),
+  bio: text("bio"),
+  profile_image_url: text("profile_image_url"),
+  country: text("country"),
+  date_of_birth: date("date_of_birth"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Export types
+export type Profile = typeof profiles.$inferSelect;
+```
+
+Now as you can see we are exporting the `profiles` table and the `Profile` type. This will allow us to use the `Profile` type in our queries and ensure type safety.
+
+Now we will be making a trigger that will automatically call a function to make an entry in the profiles table for every user created. This will make sure that every user has a profile entry in the database. We will do this by creating a function in the Supabase SQL editor;
 
 ```sql
--- Create a table for public profiles
-create table profiles (
-  id uuid references auth.users on delete cascade not null primary key,
-  updated_at timestamp with time zone,
-  username text unique,
-  full_name text,
-  avatar_url text,
-  website text,
-
-  constraint username_length check (char_length(username) >= 3)
-);
--- Set up Row Level Security (RLS)
--- See https://supabase.com/docs/guides/auth/row-level-security for more details.
-alter table profiles
-  enable row level security;
-
-create policy "Public profiles are viewable by everyone." on profiles
-  for select using (true);
-
-create policy "Users can insert their own profile." on profiles
-  for insert with check ((select auth.uid()) = id);
-
-create policy "Users can update own profile." on profiles
-  for update using ((select auth.uid()) = id);
-
--- This trigger automatically creates a profile entry when a new user signs up via Supabase Auth.
--- See https://supabase.com/docs/guides/auth/managing-user-data#using-triggers for more details.
+-- inserts a row into public.profiles
 create function public.handle_new_user()
 returns trigger
-set search_path = ''
+language plpgsql
+security definer set search_path = ''
 as $$
 begin
-  insert into public.profiles (id, full_name, avatar_url)
-  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
+  insert into public.profiles (id)
+  values (new.id);
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
+-- trigger the function every time a user is created
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
-
--- Set up Storage!
-insert into storage.buckets (id, name)
-  values ('avatars', 'avatars');
-
--- Set up access controls for storage.
--- See https://supabase.com/docs/guides/storage#policy-examples for more details.
-create policy "Avatar images are publicly accessible." on storage.objects
-  for select using (bucket_id = 'avatars');
-
-create policy "Anyone can upload an avatar." on storage.objects
-  for insert with check (bucket_id = 'avatars');
 ```
 
-Now as you can see this creates a profile for the user. We will make this profile when the user signs up. So we will use this in our `signUp` function in the `AuthenticationContext.tsx` file. We will also use the `auth.users` table to get the user information when the user signs in.
+**NOTE: The names of the columns should be snake_case, oitherwise it won't work**
 
-**NOTE: If you want to add extra fields to the profile you can do this by adding the fields to the `profiles` table in the SQL code.**
+##### Step 2: Create Database Connection
 
-```SQL
-create table profiles (
-  id uuid references auth.users on delete cascade not null primary key,
-  updated_at timestamp with time zone,
-  username text unique,
-  full_name text,
-  avatar_url text,
-  website text,
-  // Add your extra fields here
+Next, create the database connection in `db/drizzle.ts`:
+
+```typescript
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "@/db/schema";
+
+// For client-side usage, we'll use the public Supabase client
+// The database URL is only needed for migrations and server-side operations
+const databaseUrl = process.env.SUPABASE_DATABASE_URL || "";
+
+const client = postgres(databaseUrl, {
+  max: 1,
+  idle_timeout: 20,
+  connect_timeout: 10,
+});
+
+export const db = drizzle(client, { schema });
+export * from "./schema";
 ```
 
-Then you have to execute this query in the SQL editor in the Supabase dashboard. This will add the extra fields to the `profiles` table.
+##### Step 3: Configure Drizzle
+
+Create the Drizzle configuration in `drizzle.config.js`:
+
+```javascript
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./db/schema.ts",
+  out: "./db/migrations",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.SUPABASE_DATABASE_URL || "",
+  },
+});
+```
+
+##### Step 4: Set Up Environment Variables
+
+Create a `.env` file in your project root with your Supabase database URL:
+
+```env
+# Supabase Configuration
+EXPO_PUBLIC_REACT_NATIVE_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_REACT_NATIVE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Database URL for Drizzle ORM (for migrations and server-side operations)
+# Format: postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+SUPABASE_DATABASE_URL=postgresql://postgres:your_password@db.your_project_ref.supabase.co:5432/postgres
+```
+
+You can find the project reference URL in supabase under: Database -> connect (button in the header) -> ORM -> selecting the Drizzle tool -> Copy the URL and put it in your .env (and don't make it public)
+
+**To find your Supabase database URL:**
+
+1. Go to your Supabase Dashboard → Settings → Database
+2. Copy the "Connection string" (URI format)
+3. Replace `[YOUR-PASSWORD]` with your actual database password
+
+##### Step 5: Add NPM Scripts
+
+Add these scripts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "db:generate": "drizzle-kit generate --config=drizzle.config.js",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  }
+}
+```
+
+##### Step 6: Create Query Classes
+
+Create a queries file for your database operations in `lib/queries/profile.ts`:
+
+```typescript
+import { db } from "@/db/drizzle";
+import { profiles } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import type { Profile, NewProfile } from "@/db/schema";
+
+export class ProfileQueries {
+	// Get profile by user ID
+	static async getProfile(
+		userId: string
+	): Promise<{ success: boolean; data?: Profile; error?: any }> {
+		try {
+			const result = await db
+				.select()
+				.from(profiles)
+				.where(eq(profiles.id, userId));
+
+			if (result.length === 0) {
+				return { success: true, data: undefined };
+			}
+
+			return { success: true, data: result[0] };
+		} catch (error) {
+			console.error("Error fetching profile:", error);
+			return { success: false, error };
+		}
+	}
+```
+
+##### Step 7: Generate Migrations
+
+If you want to track schema changes with migrations:
+
+```bash
+npm run db:generate
+```
+
+This creates migration files in the `db/migrations` folder that you can version control. This will make sure to apply only the migrations that are not yet applied to the database.
+
+Now in order to actually apply the migrations to the database you can run the following command:
+
+```bash
+npm run db:migrate
+```
+
+This will apply the migrations to the database. If you want to push the schema to the database without creating a migration file. This is useful for tracking the changes you made in the database schema throughout the development process.
+
+Evert time you make changes to the `schema.ts` file, you can again generate and migrate to apply the changes to the database.
+
+NOTE: It is good to notice that when running the migrations you get this green output, now this is not an error but output given by postgres. This looks somewhat like this:
+
+```bash
+[⣯] applying migrations...{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '42P06',
+  message: 'schema "drizzle" already exists, skipping',
+  file: 'schemacmds.c',
+Reading config file 'C:\Users\marin\Documents\10_Projecten\01_programmeer_projecten\TEMPLATES\APP_TEMPLATE\App-Template\expo-app-template\drizzle.config.js'
+Using 'postgres' driver for database querying
+[⣯] applying migrations...{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '42P06',
+  message: 'schema "drizzle" already exists, skipping',
+  file: 'schemacmds.c',
+Using 'postgres' driver for database querying
+[⣯] applying migrations...{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '42P06',
+  message: 'schema "drizzle" already exists, skipping',
+  file: 'schemacmds.c',
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '42P06',
+  message: 'schema "drizzle" already exists, skipping',
+  file: 'schemacmds.c',
+  line: '132',
+  message: 'schema "drizzle" already exists, skipping',
+  file: 'schemacmds.c',
+  line: '132',
+  routine: 'CreateSchemaCommand'
+}
+  line: '132',
+  routine: 'CreateSchemaCommand'
+}
+  routine: 'CreateSchemaCommand'
+}
+{
+{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '42P07',
+  message: 'relation "__drizzle_migrations" already exists, skipping',
+  file: 'parse_utilcmd.c',
+  line: '207',
+  routine: 'transformCreateStmt'
+}
+```
+
+In order to display whay is looks like when we have actually applied a migration, mae changes to the DB again, and apply another migration. You can do this by adding a new column to the `profiles` table in the `schema.ts` file. For example, add a `test` column:
+
+```typescript
+export const profiles = pgTable("profiles", {
+  id: text("id").primaryKey(), // This will reference Supabase auth.users.id
+  username: text("username").unique().notNull(),
+  firstname: text("firstname").notNull(),
+  lastname: text("lastname").notNull(),
+  bio: text("bio"),
+  profileImageUrl: text("profile_image_url"),
+  country: text("country"),
+  dateOfBirth: date("date_of_birth"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  test: text("test").default("test"),
+});
+```
+
+Then we ran the `generate` command again and after that we made the `migrate command`
+
+##### Step 9: Use in Your App
+
+Now you can use your Drizzle queries in your components:
+
+```typescript
+import { ProfileQueries } from "@/lib/queries/profile";
+
+// Example usage in a component
+const handleCreateProfile = async () => {
+  const result = await ProfileQueries.createProfile({
+    id: userId,
+    username: "john_doe",
+    firstname: "John",
+    lastname: "Doe",
+    bio: "Hello world!",
+  });
+
+  if (result.success) {
+    console.log("Profile created:", result.data);
+  } else {
+    console.error("Error:", result.error);
+  }
+};
+``` 
+
+**That's it!** Your Drizzle ORM is now fully set up and connected to your Supabase PostgreSQL database. You can now write type-safe database queries with full TypeScript support.
 
 #### Using the Authentication Context
 
@@ -666,7 +884,9 @@ export default function RootLayout() {
   );
 }
 ```
+
 ##### Creating a Theme Context
+
 While we are at it we will also create a theme for the app using a context. This will allow us to easily switch between light and dark mode in the app. We will create a `themeContext.tsx` file in the `context` folder. This file will contain the theme context and the functions to switch between light and dark mode.
 
 We do this by creating a toggle function that will switch the theme between light and dark mode. We will also create a `ThemeProvider` that will wrap around the app in the `_layout.tsx` file. This will make the theme available in the whole app.
@@ -676,13 +896,13 @@ Now this is a tricky one because be will be using the `useColorScheme` hook to l
 ```javascript
 // RootLayout.tsx
 
-import { Stack } from 'expo-router';
-import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
-import { AuthProvider } from '@/context/authenticationContext';
-import { ThemeProvider, useTheme } from '@/context/themeContext';
-import { ThemeWrapper } from '@/components/ThemeWrapper';
+import { Stack } from "expo-router";
+import { GluestackUIProvider } from "@/components/ui/gluestack-ui-provider";
+import { AuthProvider } from "@/context/authenticationContext";
+import { ThemeProvider, useTheme } from "@/context/themeContext";
+import { ThemeWrapper } from "@/components/ThemeWrapper";
 
-import '@/global.css';
+import "@/global.css";
 
 export default function RootLayout() {
   return (
@@ -707,24 +927,18 @@ function InnerApp() {
     </GluestackUIProvider>
   );
 }
-
 ```
 
 ##### Creating Global types
+
 Now we will create a global types file in the root of our project. This file will contain the types for the app. We will create a `global.d.ts` file in the `lib/utils/types` of our project. This file will contain the types for the app. We will also create a `globals.d.ts` file in the root of our project. This file will contain the global types for the app. In this file we will define all the types that we will use in the app. This will include the types for the user, profile, and theme. We will also create a `supabase.d.ts` file in the `lib/utils/types` folder. This file will contain the types for the Supabase client.
 
 ```typescript
-export interface UserProfile {
-  id: string; // UUID of the user
-  updated_at: string; // Timestamp of the last update
-  username: string; // Unique username for the user
-  full_name?: string; // Full name of the user (optional)
-  avatar_url?: string; // URL to the user's avatar image (optional)
-  website?: string; // User's personal or professional website (optional)
-}
+export interface TypeName {}
 ```
 
-This will be the profile type that we will use in the app. Now you can add more types just like this one in the `global.d.ts` file
+This will contain types that we can use globally in the app. Now note that when you need a DB type you can import it from the `db/schema.ts` file. For example, if you want to use the `Profile` type you can do the following. We saw this in the drizzle installation.
+
 
 ##### Creating Protected Routes
 
@@ -764,6 +978,7 @@ useEffect(() => {
 ```
 
 At the same time we also create the (tabs) filder in which we will create the tabs for the app. This will contain the following files:
+
 - `index.tsx`: for the home page
 - `profile.tsx`: for the profile page
 - and any other additional pages that you want to add to the tabs.
@@ -771,9 +986,11 @@ At the same time we also create the (tabs) filder in which we will create the ta
 In the `_layout` in the tabs you can see by the comment how you are able to add another tab to the. Now for any other additional other pages which you don't want to add to the tabs/ navigation bar, we can just put them in the (app) folder. This will make them accessible via the URL but not via the navigation bar.
 
 ##### Login Page
+
 On the login page we will define the `useAUth` hook to access the authentication functions. We will create a form that allows the user to enter their email and password. When the user submits the form, we will call the `signIn` function from the `AuthenticationContext.tsx` file to sign in the user.
 
 ##### Sign Up Page
+
 On the sign-up page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email, password, and other profile information. When the user submits the form, we will call the `signUp` function from the `AuthenticationContext.tsx` file to sign up the user.
 
 This is a little different from the login page because we will also create a profile for the user in the `profiles` table in the Supabase database. We will use the `supabase.from("profiles").insert()` function to insert the profile information into the `profiles` table. Because when the user signs up, we want to create a profile for the user in the `profiles` table. We will also use the `signIn` function to sign in the user after they have signed up.
@@ -783,9 +1000,11 @@ If the user decides not to finish their registration, we will not create a profi
 **NOTE: Now for the Connecting the Sign Up the flow is logic. We create an account first and then move to the additional profile info. If people anbandon this profile filling in details, you still have their email. We can use this to send emails about their account not being finished**
 
 ##### Forgot Password Page
+
 On the forgot password page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `resetPassword` function from the `AuthenticationContext.tsx` file to send a password reset email to the user. This will send an email to the user with a link to reset their password.
 
 ##### Reset Password Page
+
 Now for the reset password page we need to define the route in our supabase project on the dashboard. We do this by going to the "Authentication" tab and then to the "URL Configuration" tab. Here we can set the redirect URL for the password reset page. This is the URL that the user will be redirected to when they click on the link in the password reset email. We will set this to the URL of our app's reset password page.
 
 Then what we need to add to our `app.json` is enabling the deep link funtionality. This will allow us to handle the deep link when the user clicks on the link in the password reset email. Deep link is a way to link to a specific page in your app from an external source, such as an email or a website. We will add the following code to our `app.json` file:
@@ -796,15 +1015,55 @@ Then what we need to add to our `app.json` is enabling the deep link funtionalit
     "scheme": "your-app-scheme",
     "platforms": ["android", "ios"],
     "deepLinking": true,
-    "deepLinks": ["expoapptemplate://"],
+    "deepLinks": ["expoapptemplate://"]
   }
 }
 ```
 
 On the reset password page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `resetPassword` function from the `AuthenticationContext.tsx` file to reset the user's password. This will send an email to the user with a link to reset their password.
 
-##### Verify Email Page
-On the verify email page we will also define the `useAuth` hook to access the authentication functions. We will create a form that allows the user to enter their email. When the user submits the form, we will call the `verifyEmail` function from the `AuthenticationContext.tsx` file to send a verification email to the user. This will send an email to the user with a link to verify their email address.
+Now the link that we are sending to our user contains the following:
+
+- `"{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery"`
+
+The code for generating this token hash is the following:
+
+```typescript
+const handleReset = async () => {
+  // Check for valid email format
+  if (!validateEmail(email)) {
+    setErrorMsg("Please enter a valid email address.");
+    return;
+  }
+
+  const redirectTo =
+    "web" == "web"
+      ? "http://localhost:8081/auth/reset-password"
+      : "expoapptemplate://reset-password";
+
+  setErrorMsg("");
+  const { success, error } = await resetPassword(email, {
+    redirectTo: redirectTo,
+  });
+
+  if (success) {
+    setSubmitted(true);
+  } else {
+    setErrorMsg(error?.message || "Something went wrong");
+  }
+};
+```
+
+As you can see we are not neccessarrily parsing any token but this does get put into the reset password when we are sending the supabase request to include this hash token into the request. Now in the reset password function we have the ability to verify the user session with this token throught th e following code:
+
+```typescript
+const { error } = await supabase.auth.verifyOtp({
+  type: type as any,
+  token_hash: token_hash as string,
+});
+```
+
+**NOTE: Do not forget to modify the email template in supabase**
 
 #### Default Header
 
@@ -825,3 +1084,176 @@ And the file is called the `DefaultHeader.tsx`. We will specify this header in t
 >
 ```
 
+## Implementing the rest of your App
+
+Now we have successfully done all the steps for you to implement the rest of your app. Things that you might do in the making of this app is the following:
+
+- Implement other tables in Supabase
+- Implement other pages
+
+In the following chapter we will be discussing these
+
+### Implementing New Tables
+
+Now let's say you are building a social media platform. Currently, we have the `Authentication` table and the `Profile` table. What you want to do next is draw a thoughtful diagram of your database and then decide which tables to implement first.
+
+In this case, we’ll add a `Following` table to simulate the "follow" feature common in social media apps.
+
+Now notice that in UML (Unified Modeling Language) or object-oriented design terms, the `Following` table is an **association class**.
+
+Why?
+
+- It associates two instances of the same class (`Profile`) — one as the follower, and the other as the followed.
+- It also contains additional data, like `followed_at`, which is metadata about the relationship itself.
+- In object-oriented modeling, when a many-to-many relationship includes extra attributes, the connecting entity is called an **association class**.
+
+---
+
+### 🛠️ Creating a New Table in Supabase
+
+In Supabase, go to the "Tables" section of your project and click **Create a New Table**. You'll see several fields and options. Let’s walk through each of them:
+
+---
+
+#### 🏷️ Name
+
+This is the name of your table.  
+For example: `following`.
+
+> ⚠️ Table names should be lowercase and usually plural (`followings`) unless you prefer singular. Just be consistent.
+
+---
+
+#### 📝 Description
+
+Add an optional description for your table.  
+Example:
+
+> Tracks the relationship between profiles where one user follows another.
+
+---
+
+#### 🔒 Enable Row Level Security (RLS)
+
+This determines if access to individual rows in the table can be restricted based on policies.
+
+**Recommendation**: ✅ Enable RLS  
+This is crucial for user-level privacy and access control. You’ll write policies later to define who can read or write data.
+
+---
+
+#### 📡 Enable Realtime
+
+This enables broadcasting changes (inserts, updates, deletes) to authorized clients in real-time.
+
+**Recommendation**: ✅ Enable if your app uses live updates (e.g., follower count, notifications).
+
+---
+
+#### 📊 Columns
+
+In this section, you define the fields of your table. For the `Following` table, your basic structure might look like this:
+
+| Column Name   | Type      | Notes            |
+| ------------- | --------- | ---------------- |
+| `follower_id` | UUID      | FK → Profile ID  |
+| `followed_id` | UUID      | FK → Profile ID  |
+| `followed_at` | Timestamp | Default: `now()` |
+
+##### 🔗 Link Icon Next to Column Name
+
+Clicking this lets you define a **foreign key** relationship — useful when `follower_id` and `followed_id` should link to the `Profiles` table.
+
+When you click the link icon next to a column name, a menu appears that walks you through setting up the relationship. The first step is:
+
+---
+
+###### 🔍 Select a Schema
+
+This defines which schema your reference table lives in. Common schemas include:
+
+- **public** – The default schema where most of your tables (like `profiles`) live.
+- **realtime** – Used internally for broadcasting real-time updates via Supabase’s subscription features.
+- **auth** – Contains user-related tables such as `users` for authentication.
+- **storage** – Stores metadata about files in Supabase’s storage system.
+- **graphql** – Used internally for Supabase's GraphQL API interface.
+- **graphsql_public** – A variant schema used for exposing public GraphQL queries.
+- **vault** – Stores encrypted or sensitive data.
+- **pgbouncer** – A system schema related to database connection pooling.
+- **extensions** – Contains installed PostgreSQL extensions.
+
+> ✅ Since we created our `profiles` table in the **public** schema, we’ll select that one.
+
+---
+
+###### 📄 Select the Target Table
+
+After choosing the schema, you'll pick the table that contains the rows you want to reference — in our case, the `profiles` table.
+
+---
+
+###### 📌 Select Column to Reference
+
+Now choose the **column** in the target table you want to link to. Usually, this will be the `id` column from the `profiles` table, since `follower_id` and `followed_id` are meant to refer to user IDs.
+
+---
+
+###### 🔄 On Update & Delete Actions
+
+Define what should happen to your row when the **referenced row** in the `profiles` table is updated or deleted:
+
+- **No Action** – Do nothing.
+- **Restrict** – Prevent deletion or update if it's still referenced.
+- **Set Null** – Set the referencing column to `NULL`.
+- **Set Default** – Set the referencing column to its default value.
+- **Cascade** – Automatically delete or update referencing rows.
+
+> 💡 For our `follows` table, we choose **CASCADE** for `ON DELETE`. That way, if a profile is deleted, any rows where it was a follower or being followed will also be cleaned up automatically.
+
+##### 🔠 Type
+
+Choose the appropriate data type (e.g., `UUID`, `Timestamp`, `Text`, etc.)
+
+##### 🧩 Default Value
+
+Use for auto-generated values.  
+Example: `followed_at` might default to `now()`.
+
+##### 🔑 Primary
+
+Check this box to make the column a primary key.  
+In this case, you’ll usually set a **composite primary key** on both `follower_id` and `followed_id`.
+
+---
+
+#### 🔗 Foreign Keys
+
+This is where you define relationships between tables.
+
+##### Add a Foreign Key Relation
+
+For each of these:
+
+- `follower_id` → references `profiles.id`
+- `followed_id` → references `profiles.id`
+
+> These links help Supabase maintain data integrity and enable advanced queries with joins.
+
+Now what we can do is insert things into this table using the following typescript code:
+
+```typescript
+const handleFollow = async () => {
+  const { data, error } = await supabase
+    .from("follows")
+    .insert([{ follower_id: followerId, followed_id: followedId }]);
+
+  if (error) {
+    Alert.alert("Error", error.message);
+    console.error("Insert error:", error);
+    return;
+  }
+
+  Alert.alert("Success", "You are now following this user!");
+  console.log("Insert success:", data);
+};
+```
