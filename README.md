@@ -632,6 +632,17 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 ```
 
+Also we need to create a policy that allows the user to update their own profile and see their own profile. We can do this by running the following SQL commands in the Supabase SQL editor:
+
+```sql
+CREATE POLICY "Users can read their own profile"
+ON public.profiles
+FOR SELECT
+USING (id = auth.uid());
+```
+
+If you don't do this the user will continiously be redirected to the complete profile screen when they try to access their own profile. This is because the user does not have permission to read their own profile.
+
 **NOTE: The names of the columns should be snake_case, oitherwise it won't work**
 
 ##### Step 2: Create Database Connection
