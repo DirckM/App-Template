@@ -201,11 +201,11 @@ const expoConfig = require("eslint-config-expo/flat");
 const eslintPluginPrettierRecommended = require("eslint-plugin-prettier/recommended");
 
 module.exports = defineConfig([
-  expoConfig,
-  eslintPluginPrettierRecommended,
-  {
-    ignores: ["dist/*"],
-  },
+	expoConfig,
+	eslintPluginPrettierRecommended,
+	{
+		ignores: ["dist/*"],
+	},
 ]);
 ```
 
@@ -213,12 +213,12 @@ This configuration extends the Expo ESLint configuration and includes Prettier a
 
 ```json
 {
-  "singleQuote": true,
-  "trailingComma": "all",
-  "tabWidth": 2,
-  "semi": true,
-  "printWidth": 80,
-  "endOfLine": "lf"
+	"singleQuote": true,
+	"trailingComma": "all",
+	"tabWidth": 2,
+	"semi": true,
+	"printWidth": 80,
+	"endOfLine": "lf"
 }
 ```
 
@@ -232,8 +232,8 @@ Then type 'settings' and select 'Preferences: Open Workspace Settings (JSON)'. T
 
 ```json
 {
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnSave": true
 }
 ```
 
@@ -259,13 +259,13 @@ This will create a `tailwind.config.js` file in the root of your project. Now in
 ```javascript
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // NOTE: Update this to include the paths to all files that contain Nativewind classes.
-  content: ["./App.tsx", "./components/**/*.{js,jsx,ts,tsx}"], // Put other paths here that contain Tailwind classes
-  presets: [require("nativewind/preset")],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
+	// NOTE: Update this to include the paths to all files that contain Nativewind classes.
+	content: ["./App.tsx", "./components/**/*.{js,jsx,ts,tsx}"], // Put other paths here that contain Tailwind classes
+	presets: [require("nativewind/preset")],
+	theme: {
+		extend: {},
+	},
+	plugins: [],
 };
 ```
 
@@ -281,13 +281,13 @@ Then we need to create a `babel.config.js` file in the root of your project with
 
 ```javascript
 module.exports = function (api) {
-  api.cache(true);
-  return {
-    presets: [
-      ["babel-preset-expo", { jsxImportSource: "nativewind" }],
-      "nativewind/babel",
-    ],
-  };
+	api.cache(true);
+	return {
+		presets: [
+			["babel-preset-expo", { jsxImportSource: "nativewind" }],
+			"nativewind/babel",
+		],
+	};
 };
 ```
 
@@ -316,11 +316,11 @@ Then in the app.json we need to specify that we are using the metro bundler by a
 
 ```json
 {
-  "expo": {
-    "web": {
-      "bundler": "metro"
-    }
-  }
+	"expo": {
+		"web": {
+			"bundler": "metro"
+		}
+	}
 }
 ```
 
@@ -338,13 +338,13 @@ Now what we can do is try this out making a simple component. So we create a new
 import { View, Text } from "react-native";
 
 export default function TestComponent() {
-  return (
-    <View className="bg-blue-500 p-4 rounded-xl">
-      <Text className="text-white text-lg font-bold">
-        NativeWind is working 🎉
-      </Text>
-    </View>
-  );
+	return (
+		<View className="bg-blue-500 p-4 rounded-xl">
+			<Text className="text-white text-lg font-bold">
+				NativeWind is working 🎉
+			</Text>
+		</View>
+	);
 }
 ```
 
@@ -355,18 +355,18 @@ import { Text, View } from "react-native";
 import TestComponent from "@/components/TestComponent";
 
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-      <TestComponent />
-    </View>
-  );
+	return (
+		<View
+			style={{
+				flex: 1,
+				justifyContent: "center",
+				alignItems: "center",
+			}}
+		>
+			<Text>Edit app/index.tsx to edit this screen.</Text>
+			<TestComponent />
+		</View>
+	);
 }
 ```
 
@@ -419,19 +419,19 @@ import TestComponent from "@/components/TestComponent";
 import { Box } from "@/components/ui/box";
 
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-      <TestComponent />
-      <Box className="bg-blue-500 p-4 rounded"></Box>
-    </View>
-  );
+	return (
+		<View
+			style={{
+				flex: 1,
+				justifyContent: "center",
+				alignItems: "center",
+			}}
+		>
+			<Text>Edit app/index.tsx to edit this screen.</Text>
+			<TestComponent />
+			<Box className="bg-blue-500 p-4 rounded"></Box>
+		</View>
+	);
 }
 ```
 
@@ -518,11 +518,11 @@ import { AppState } from "react-native";
 import { supabase } from "./supabase";
 
 AppState.addEventListener("change", (state) => {
-  if (state === "active") {
-    supabase.auth.startAutoRefresh();
-  } else {
-    supabase.auth.stopAutoRefresh();
-  }
+	if (state === "active") {
+		supabase.auth.startAutoRefresh();
+	} else {
+		supabase.auth.stopAutoRefresh();
+	}
 });
 ```
 
@@ -533,16 +533,16 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type StorageType = {
-  getItem(key: string): Promise<string | null>;
-  setItem(key: string, value: string): Promise<void>;
-  removeItem(key: string): Promise<void>;
+	getItem(key: string): Promise<string | null>;
+	setItem(key: string, value: string): Promise<void>;
+	removeItem(key: string): Promise<void>;
 };
 
 const WebStorage: StorageType = {
-  getItem: (key) => Promise.resolve(window.localStorage.getItem(key)),
-  setItem: (key, value) =>
-    Promise.resolve(window.localStorage.setItem(key, value)),
-  removeItem: (key) => Promise.resolve(window.localStorage.removeItem(key)),
+	getItem: (key) => Promise.resolve(window.localStorage.getItem(key)),
+	setItem: (key, value) =>
+		Promise.resolve(window.localStorage.setItem(key, value)),
+	removeItem: (key) => Promise.resolve(window.localStorage.removeItem(key)),
 };
 
 const storage: StorageType = Platform.OS === "web" ? WebStorage : AsyncStorage;
@@ -572,7 +572,7 @@ Now in order to set up Drizzle we go to our root and create a `db` folder. In th
 
 - `schema.ts` (Will define the DB schema and export the db types (yes this is possible))
 - `drizzle.ts` (This will connect out Drizzle with Supabase)
-- `drizzle.config.js` (setup the connection with the database)
+- `drizzle.config.js` (setup the connection with the database, make this in the root of your project)
 
 Now what Drizzle Basically does is it wraps Supabase. So since Supabase doesn't handle direct types from the DB and handle querues better. So what we want to do is define our schema in the schemma.ts. Then we want to connect the app with supabase in the drizzle.ts and then lastly in the drizzle.config.js we will configure drizzle preferences.
 
@@ -593,16 +593,16 @@ import { pgTable, text, timestamp, date } from "drizzle-orm/pg-core";
 
 // Profile table
 export const profiles = pgTable("profiles", {
-  id: text("id").primaryKey(), // This will reference Supabase auth.users.id
-  username: text("username").unique().notNull(),
-  first_name: text("firstname").notNull(),
-  last_name: text("lastname").notNull(),
-  bio: text("bio"),
-  profile_image_url: text("profile_image_url"),
-  country: text("country"),
-  date_of_birth: date("date_of_birth"),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
+	id: uuid("id").primaryKey(),
+	username: text("username").unique(),
+	firstname: text("firstname"),
+	lastname: text("lastname"),
+	bio: text("bio"),
+	profile_image_url: text("profile_image_url"),
+	country: text("country"),
+	date_of_birth: date("date_of_birth"),
+	created_at: timestamp("created_at").defaultNow().notNull(),
+	updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Export types
@@ -610,38 +610,6 @@ export type Profile = typeof profiles.$inferSelect;
 ```
 
 Now as you can see we are exporting the `profiles` table and the `Profile` type. This will allow us to use the `Profile` type in our queries and ensure type safety.
-
-Now we will be making a trigger that will automatically call a function to make an entry in the profiles table for every user created. This will make sure that every user has a profile entry in the database. We will do this by creating a function in the Supabase SQL editor;
-
-```sql
--- inserts a row into public.profiles
-create function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = ''
-as $$
-begin
-  insert into public.profiles (id)
-  values (new.id);
-  return new;
-end;
-$$;
--- trigger the function every time a user is created
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
-```
-
-Also we need to create a policy that allows the user to update their own profile and see their own profile. We can do this by running the following SQL commands in the Supabase SQL editor:
-
-```sql
-CREATE POLICY "Users can read their own profile"
-ON public.profiles
-FOR SELECT
-USING (id = auth.uid());
-```
-
-If you don't do this the user will continiously be redirected to the complete profile screen when they try to access their own profile. This is because the user does not have permission to read their own profile.
 
 **NOTE: The names of the columns should be snake_case, oitherwise it won't work**
 
@@ -659,9 +627,9 @@ import * as schema from "@/db/schema";
 const databaseUrl = process.env.SUPABASE_DATABASE_URL || "";
 
 const client = postgres(databaseUrl, {
-  max: 1,
-  idle_timeout: 20,
-  connect_timeout: 10,
+	max: 1,
+	idle_timeout: 20,
+	connect_timeout: 10,
 });
 
 export const db = drizzle(client, { schema });
@@ -676,12 +644,12 @@ Create the Drizzle configuration in `drizzle.config.js`:
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
-  schema: "./db/schema.ts",
-  out: "./db/migrations",
-  dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.SUPABASE_DATABASE_URL || "",
-  },
+	schema: "./db/schema.ts",
+	out: "./db/migrations",
+	dialect: "postgresql",
+	dbCredentials: {
+		url: process.env.SUPABASE_DATABASE_URL || "",
+	},
 });
 ```
 
@@ -696,7 +664,7 @@ EXPO_PUBLIC_REACT_NATIVE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # Database URL for Drizzle ORM (for migrations and server-side operations)
 # Format: postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
-SUPABASE_DATABASE_URL=postgresql://postgres:your_password@db.your_project_ref.supabase.co:5432/postgres
+SUPABASE_DATABASE_URL='postgresql://postgres:your_password@db.your_project_ref.supabase.co:5432/postgres'
 ```
 
 You can find the project reference URL in supabase under: Database -> connect (button in the header) -> ORM -> selecting the Drizzle tool -> Copy the URL and put it in your .env (and don't make it public)
@@ -713,12 +681,12 @@ Add these scripts to your `package.json`:
 
 ```json
 {
-  "scripts": {
-    "db:generate": "drizzle-kit generate --config=drizzle.config.js",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
-  }
+	"scripts": {
+		"db:generate": "drizzle-kit generate --config=drizzle.config.js",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio"
+	}
 }
 ```
 
@@ -831,21 +799,53 @@ In order to display whay is looks like when we have actually applied a migration
 
 ```typescript
 export const profiles = pgTable("profiles", {
-  id: text("id").primaryKey(), // This will reference Supabase auth.users.id
-  username: text("username").unique().notNull(),
-  firstname: text("firstname").notNull(),
-  lastname: text("lastname").notNull(),
-  bio: text("bio"),
-  profileImageUrl: text("profile_image_url"),
-  country: text("country"),
-  dateOfBirth: date("date_of_birth"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  test: text("test").default("test"),
+	id: text("id").primaryKey(), // This will reference Supabase auth.users.id
+	username: text("username").unique().notNull(),
+	firstname: text("firstname").notNull(),
+	lastname: text("lastname").notNull(),
+	bio: text("bio"),
+	profileImageUrl: text("profile_image_url"),
+	country: text("country"),
+	dateOfBirth: date("date_of_birth"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	test: text("test").default("test"),
 });
 ```
 
 Then we ran the `generate` command again and after that we made the `migrate command`
+
+Now we will be making a trigger that will automatically call a function to make an entry in the profiles table for every user created. This will make sure that every user has a profile entry in the database. We will do this by creating a function in the Supabase SQL editor;
+
+```sql
+-- inserts a row into public.profiles
+create function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = ''
+as $$
+begin
+  insert into public.profiles (id)
+  values (new.id);
+  return new;
+end;
+$$;
+-- trigger the function every time a user is created
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+```
+
+Also we need to create a policy that allows the user to update their own profile and see their own profile. We can do this by running the following SQL commands in the Supabase SQL editor:
+
+```sql
+CREATE POLICY "Users can read their own profile"
+ON public.profiles
+FOR SELECT
+USING (id = auth.uid());
+```
+
+If you don't do this the user will continiously be redirected to the complete profile screen when they try to access their own profile. This is because the user does not have permission to read their own profile.
 
 ##### Step 9: Use in Your App
 
@@ -856,21 +856,108 @@ import { ProfileQueries } from "@/lib/queries/profile";
 
 // Example usage in a component
 const handleCreateProfile = async () => {
-  const result = await ProfileQueries.createProfile({
-    id: userId,
-    username: "john_doe",
-    firstname: "John",
-    lastname: "Doe",
-    bio: "Hello world!",
-  });
+	const result = await ProfileQueries.createProfile({
+		id: userId,
+		username: "john_doe",
+		firstname: "John",
+		lastname: "Doe",
+		bio: "Hello world!",
+	});
 
-  if (result.success) {
-    console.log("Profile created:", result.data);
-  } else {
-    console.error("Error:", result.error);
-  }
+	if (result.success) {
+		console.log("Profile created:", result.data);
+	} else {
+		console.error("Error:", result.error);
+	}
 };
-``` 
+```
+##### 10. Creating normal functions and triggers
+Now we might want to creat some triggers and functions that insert, delete or update data when a particulat action is happening. We define this with SQL and will do this in our drizzle schema. 
+
+##### 11. Creating Edge functions (optional)
+It is good to understand edge functions before you try to implement them. Basically what they are is the following:
+
+Edge Functions are serverless functions written in JavaScript or TypeScript that run outside your database, at the network edge (close to users). They allow you to implement backend logic, APIs, or integrations that execute securely and with low latency.
+
+We will provide an example with what edge functions can do. So let's have the situation where if a user signs up to your platform, you want to send them an email. Now this might go through a third party service wherefor you need to set a private API key which you don't want to expose to the client app. You can then use an edge function to send this email instead of doing it in the app.
+
+Now you can manually do this but then they won't live in the codebase and are undocumented. So what you want is to have a these documented in your codebase. What we will do to keep this ordered is eventually have the following structure:
+
+- creating a supabase folder -> here the edge functions will be stored
+
+What we first will do is check for the presence of the Supabase CLI which we probably have not yet installed for the project:
+
+```bash
+nxp supabase --version
+```
+
+If this doesn't return a function than we need to download it first:
+
+```bash
+npm install supabase
+```
+
+(This installs it for the project)
+
+Then what we do is check for the version to see if it again is installed (see the previous command)
+
+Now we will create a `supabase.config.json` in which we will have to specify that we are using the folder `supabase/functions` folder as the place where we store the functions
+
+```json
+{
+	"functions": {
+		"root": "./supabase/functions"
+	}
+}
+```
+
+Then we need to create the `supabase` folder and the `functions` folder in which we will put the functions. We do this by running the following command:
+
+```bash
+mkdir -p supabase/functions
+```
+
+Now we can start by making our first functions here. How we make function goes as follows:
+
+- We run the command:
+
+```bash
+npx supabase functions new <function name>
+```
+
+This will automatically create a config and .temp file in your supabase folder which supabase uses. Now for an example we will use the hello world example. So what you can do is type
+
+```bash
+npx supabase functions new hello-world
+```
+
+This will make a hello-world function which includes an index.ts file with the following code:
+
+```typescript
+Deno.serve(async (req) => {
+	const { name } = await req.json();
+	const data = {
+		message: `Hello ${name}!`,
+	};
+	return new Response(JSON.stringify(data), {
+		headers: { "Content-Type": "application/json" },
+	});
+});
+```
+
+As you can see we created a function in the supabase folder called `hello-world`. In this folder we created the index.ts and with the test function in it. Now in order to actually apply the changes to the DB we use the following command:
+
+```bash
+npx supabase functions deploy <name-of-function-folder>
+```
+
+so in the case of the `hello-world` we do:
+
+```bash
+npx supabase functions deploy hello-world
+```
+
+Now it will first prompt you to log into your supabase account but then you can atually do deploy the function. Now what you can do is you can call this function using your postman or just in your app. You do have to provide authentication so that is why in your postman you do have to verify the session, so you can do this if you are balls deep into testing or just test it in your app directly
 
 **That's it!** Your Drizzle ORM is now fully set up and connected to your Supabase PostgreSQL database. You can now write type-safe database queries with full TypeScript support.
 
@@ -886,13 +973,13 @@ import { AuthProvider } from "@/context/authenticationContext";
 import "@/global.css";
 
 export default function RootLayout() {
-  return (
-    <GluestackUIProvider mode="light">
-      <AuthProvider>
-        <Stack />
-      </AuthProvider>
-    </GluestackUIProvider>
-  );
+	return (
+		<GluestackUIProvider mode="light">
+			<AuthProvider>
+				<Stack />
+			</AuthProvider>
+		</GluestackUIProvider>
+	);
 }
 ```
 
@@ -916,27 +1003,27 @@ import { ThemeWrapper } from "@/components/ThemeWrapper";
 import "@/global.css";
 
 export default function RootLayout() {
-  return (
-    <ThemeProvider>
-      <ThemeWrapper>
-        <InnerApp />
-      </ThemeWrapper>
-    </ThemeProvider>
-  );
+	return (
+		<ThemeProvider>
+			<ThemeWrapper>
+				<InnerApp />
+			</ThemeWrapper>
+		</ThemeProvider>
+	);
 }
 
 // InnerApp is a child that consumes the theme context
 function InnerApp() {
-  const { colorScheme } = useTheme();
+	const { colorScheme } = useTheme();
 
-  return (
-    // We still have to provide the light and dark mode to the GluestackUIProvider
-    <GluestackUIProvider mode={colorScheme}>
-      <AuthProvider>
-        <Stack />
-      </AuthProvider>
-    </GluestackUIProvider>
-  );
+	return (
+		// We still have to provide the light and dark mode to the GluestackUIProvider
+		<GluestackUIProvider mode={colorScheme}>
+			<AuthProvider>
+				<Stack />
+			</AuthProvider>
+		</GluestackUIProvider>
+	);
 }
 ```
 
@@ -949,7 +1036,6 @@ export interface TypeName {}
 ```
 
 This will contain types that we can use globally in the app. Now note that when you need a DB type you can import it from the `db/schema.ts` file. For example, if you want to use the `Profile` type you can do the following. We saw this in the drizzle installation.
-
 
 ##### Creating Protected Routes
 
@@ -982,9 +1068,9 @@ const { session, loading } = useAuth();
 
 // Redirect to login if not authenticated
 useEffect(() => {
-  if (!loading && !session) {
-    router.replace("../auth/login"); //You route might differ
-  }
+	if (!loading && !session) {
+		router.replace("../auth/login"); //You route might differ
+	}
 }, [loading, session]);
 ```
 
@@ -1022,12 +1108,12 @@ Then what we need to add to our `app.json` is enabling the deep link funtionalit
 
 ```json
 {
-  "expo": {
-    "scheme": "your-app-scheme",
-    "platforms": ["android", "ios"],
-    "deepLinking": true,
-    "deepLinks": ["expoapptemplate://"]
-  }
+	"expo": {
+		"scheme": "your-app-scheme",
+		"platforms": ["android", "ios"],
+		"deepLinking": true,
+		"deepLinks": ["expoapptemplate://"]
+	}
 }
 ```
 
@@ -1041,27 +1127,27 @@ The code for generating this token hash is the following:
 
 ```typescript
 const handleReset = async () => {
-  // Check for valid email format
-  if (!validateEmail(email)) {
-    setErrorMsg("Please enter a valid email address.");
-    return;
-  }
+	// Check for valid email format
+	if (!validateEmail(email)) {
+		setErrorMsg("Please enter a valid email address.");
+		return;
+	}
 
-  const redirectTo =
-    "web" == "web"
-      ? "http://localhost:8081/auth/reset-password"
-      : "expoapptemplate://reset-password";
+	const redirectTo =
+		"web" == "web"
+			? "http://localhost:8081/auth/reset-password"
+			: "expoapptemplate://reset-password";
 
-  setErrorMsg("");
-  const { success, error } = await resetPassword(email, {
-    redirectTo: redirectTo,
-  });
+	setErrorMsg("");
+	const { success, error } = await resetPassword(email, {
+		redirectTo: redirectTo,
+	});
 
-  if (success) {
-    setSubmitted(true);
-  } else {
-    setErrorMsg(error?.message || "Something went wrong");
-  }
+	if (success) {
+		setSubmitted(true);
+	} else {
+		setErrorMsg(error?.message || "Something went wrong");
+	}
 };
 ```
 
@@ -1069,8 +1155,8 @@ As you can see we are not neccessarrily parsing any token but this does get put 
 
 ```typescript
 const { error } = await supabase.auth.verifyOtp({
-  type: type as any,
-  token_hash: token_hash as string,
+	type: type as any,
+	token_hash: token_hash as string,
 });
 ```
 
@@ -1254,17 +1340,17 @@ Now what we can do is insert things into this table using the following typescri
 
 ```typescript
 const handleFollow = async () => {
-  const { data, error } = await supabase
-    .from("follows")
-    .insert([{ follower_id: followerId, followed_id: followedId }]);
+	const { data, error } = await supabase
+		.from("follows")
+		.insert([{ follower_id: followerId, followed_id: followedId }]);
 
-  if (error) {
-    Alert.alert("Error", error.message);
-    console.error("Insert error:", error);
-    return;
-  }
+	if (error) {
+		Alert.alert("Error", error.message);
+		console.error("Insert error:", error);
+		return;
+	}
 
-  Alert.alert("Success", "You are now following this user!");
-  console.log("Insert success:", data);
+	Alert.alert("Success", "You are now following this user!");
+	console.log("Insert success:", data);
 };
 ```

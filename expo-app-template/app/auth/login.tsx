@@ -7,8 +7,11 @@ import { supabase } from '@/lib/utils/supabaseClient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
+import { useAuth } from '@/context/authenticationContext';
 
 export default function LoginScreen() {
+  const { signInUser } = useAuth();
+
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
