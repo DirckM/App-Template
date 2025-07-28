@@ -8,6 +8,27 @@
       "when": 1753362053334,
       "tag": "0000_married_romulus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1753370000000,
+      "tag": "0001_creating_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1753370001000,
+      "tag": "0002_creating_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1753370002000,
+      "tag": "0003_creating_policies",
+      "breakpoints": true
     }
   ]
 }

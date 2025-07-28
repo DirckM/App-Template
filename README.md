@@ -190,7 +190,7 @@ Now in order to install prettier we will be using another command which is the f
 
 ```bash
 npx expo install prettier eslint-config-prettier eslint-plugin-prettier "--" --dev
-
+npm install --save-dev prettier-plugin-sql
 ```
 
 Now additionally we have to update the 'eslint.config.js' file to include the following:
@@ -218,7 +218,9 @@ This configuration extends the Expo ESLint configuration and includes Prettier a
 	"tabWidth": 2,
 	"semi": true,
 	"printWidth": 80,
-	"endOfLine": "lf"
+	"endOfLine": "lf",
+	"plugins": ["prettier-plugin-embed", "prettier-plugin-sql"],
+	"language": "postgresql" //specifies that we are using postgras code because this is what supabase it build on top of
 }
 ```
 
@@ -568,11 +570,18 @@ Now we need to configure the other tables in the Supabase. Now you can choose yo
 
 Now there are a view things to note here before we get started. During the making of this tutorial I choose the User Management QuickStart, which you should not do when you want a blank project. What this does it creates all these triggers and policies which are going to be dependent on the `auth` table. This will cause it to fail when sending requests to the database because these triggers and policies do not contain the fields that you need for your custom DB setup. So make sure you delete these first.
 
-Now in order to set up Drizzle we go to our root and create a `db` folder. In this folder we will create the files
+Now in order to set up Drizzle we go to our root and create a `db` folder. In this folder we will create the following folders and files
 
-- `schema.ts` (Will define the DB schema and export the db types (yes this is possible))
+- `schema` -> inside of this folder a
+  - `schema.ts` (Will define the DB schema and export the db types (yes this is possible))
+- `sql` -> inside the folders
+  - `triggers` -> inside your trigger sql files
+  - `functions` -> inside your functions sql files
+- `migrations.ts`
 - `drizzle.ts` (This will connect out Drizzle with Supabase)
 - `drizzle.config.js` (setup the connection with the database, make this in the root of your project)
+
+Now we have this particular structure so that we can define triggers and functions and other things that we might add, into our SQL. This is seperate from our schema. Then in our migration.ts we will specify to generate and migrate the SQL to the supabase.
 
 Now what Drizzle Basically does is it wraps Supabase. So since Supabase doesn't handle direct types from the DB and handle querues better. So what we want to do is define our schema in the schemma.ts. Then we want to connect the app with supabase in the drizzle.ts and then lastly in the drizzle.config.js we will configure drizzle preferences.
 
@@ -586,7 +595,7 @@ npm i postgres
 
 ##### Step 1: Create the Database Schema
 
-First, let's create our database schema in `db/schema.ts`:
+First, let's create our database schema in `db/schema/schema.ts`:
 
 ```typescript
 import { pgTable, text, timestamp, date } from "drizzle-orm/pg-core";
@@ -815,28 +824,31 @@ export const profiles = pgTable("profiles", {
 
 Then we ran the `generate` command again and after that we made the `migrate command`
 
-Now we will be making a trigger that will automatically call a function to make an entry in the profiles table for every user created. This will make sure that every user has a profile entry in the database. We will do this by creating a function in the Supabase SQL editor;
+Now we will be making a trigger that will automatically call a function to make an entry in the profiles table for every user created. This will make sure that every user has a profile entry in the database. We will do this by creating a trigger manually in the migrations.
 
+So what we need to do is we need to create new file in which we define a new trigger. For example we make the file ``0001_creating_triggers.sql`. Then in this file we can define the triggers that we need. For example:
 ```sql
--- inserts a row into public.profiles
-create function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = ''
-as $$
-begin
-  insert into public.profiles (id)
-  values (new.id);
-  return new;
-end;
-$$;
--- trigger the function every time a user is created
+-- This trigger created a profile for every user that is created that calls the function 'on_auth_user_created'
+
+drop trigger if exists on_auth_user_created on auth.users;
+
 create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+after insert on auth.users for each row
+execute function public.handle_new_user ();
 ```
 
-Also we need to create a policy that allows the user to update their own profile and see their own profile. We can do this by running the following SQL commands in the Supabase SQL editor:
+Now in order to apply the trigger we have to manually add the entry for that fil into the `journal.json` like so:
+```json
+{
+      "idx": 2,
+      "version": "7",
+      "when": 1753370001000,
+      "tag": "0002_creating_triggers",
+      "breakpoints": true
+    }
+```
+
+Also we need to create a policy that allows the user to update their own profile and see their own profile. We can do this by creating anothe migration called `0003_creating_policies.sql`. 
 
 ```sql
 CREATE POLICY "Users can read their own profile"
@@ -846,6 +858,8 @@ USING (id = auth.uid());
 ```
 
 If you don't do this the user will continiously be redirected to the complete profile screen when they try to access their own profile. This is because the user does not have permission to read their own profile.
+
+Now you can run any manual SQL by just inserting new migrations and adding them to the journal. The only problem is that when you want to insert a new trigger you also have to make a new migration. So you cannot just put the new trigger in the migration that we already ran. So it is handy to keep note of the triggers and the functions and policies by hand next to the migrations so that you know what the current state is
 
 ##### Step 9: Use in Your App
 
@@ -871,10 +885,9 @@ const handleCreateProfile = async () => {
 	}
 };
 ```
-##### 10. Creating normal functions and triggers
-Now we might want to creat some triggers and functions that insert, delete or update data when a particulat action is happening. We define this with SQL and will do this in our drizzle schema. 
 
 ##### 11. Creating Edge functions (optional)
+
 It is good to understand edge functions before you try to implement them. Basically what they are is the following:
 
 Edge Functions are serverless functions written in JavaScript or TypeScript that run outside your database, at the network edge (close to users). They allow you to implement backend logic, APIs, or integrations that execute securely and with low latency.
@@ -1190,167 +1203,3 @@ Now we have successfully done all the steps for you to implement the rest of you
 
 In the following chapter we will be discussing these
 
-### Implementing New Tables
-
-Now let's say you are building a social media platform. Currently, we have the `Authentication` table and the `Profile` table. What you want to do next is draw a thoughtful diagram of your database and then decide which tables to implement first.
-
-In this case, we’ll add a `Following` table to simulate the "follow" feature common in social media apps.
-
-Now notice that in UML (Unified Modeling Language) or object-oriented design terms, the `Following` table is an **association class**.
-
-Why?
-
-- It associates two instances of the same class (`Profile`) — one as the follower, and the other as the followed.
-- It also contains additional data, like `followed_at`, which is metadata about the relationship itself.
-- In object-oriented modeling, when a many-to-many relationship includes extra attributes, the connecting entity is called an **association class**.
-
----
-
-### 🛠️ Creating a New Table in Supabase
-
-In Supabase, go to the "Tables" section of your project and click **Create a New Table**. You'll see several fields and options. Let’s walk through each of them:
-
----
-
-#### 🏷️ Name
-
-This is the name of your table.  
-For example: `following`.
-
-> ⚠️ Table names should be lowercase and usually plural (`followings`) unless you prefer singular. Just be consistent.
-
----
-
-#### 📝 Description
-
-Add an optional description for your table.  
-Example:
-
-> Tracks the relationship between profiles where one user follows another.
-
----
-
-#### 🔒 Enable Row Level Security (RLS)
-
-This determines if access to individual rows in the table can be restricted based on policies.
-
-**Recommendation**: ✅ Enable RLS  
-This is crucial for user-level privacy and access control. You’ll write policies later to define who can read or write data.
-
----
-
-#### 📡 Enable Realtime
-
-This enables broadcasting changes (inserts, updates, deletes) to authorized clients in real-time.
-
-**Recommendation**: ✅ Enable if your app uses live updates (e.g., follower count, notifications).
-
----
-
-#### 📊 Columns
-
-In this section, you define the fields of your table. For the `Following` table, your basic structure might look like this:
-
-| Column Name   | Type      | Notes            |
-| ------------- | --------- | ---------------- |
-| `follower_id` | UUID      | FK → Profile ID  |
-| `followed_id` | UUID      | FK → Profile ID  |
-| `followed_at` | Timestamp | Default: `now()` |
-
-##### 🔗 Link Icon Next to Column Name
-
-Clicking this lets you define a **foreign key** relationship — useful when `follower_id` and `followed_id` should link to the `Profiles` table.
-
-When you click the link icon next to a column name, a menu appears that walks you through setting up the relationship. The first step is:
-
----
-
-###### 🔍 Select a Schema
-
-This defines which schema your reference table lives in. Common schemas include:
-
-- **public** – The default schema where most of your tables (like `profiles`) live.
-- **realtime** – Used internally for broadcasting real-time updates via Supabase’s subscription features.
-- **auth** – Contains user-related tables such as `users` for authentication.
-- **storage** – Stores metadata about files in Supabase’s storage system.
-- **graphql** – Used internally for Supabase's GraphQL API interface.
-- **graphsql_public** – A variant schema used for exposing public GraphQL queries.
-- **vault** – Stores encrypted or sensitive data.
-- **pgbouncer** – A system schema related to database connection pooling.
-- **extensions** – Contains installed PostgreSQL extensions.
-
-> ✅ Since we created our `profiles` table in the **public** schema, we’ll select that one.
-
----
-
-###### 📄 Select the Target Table
-
-After choosing the schema, you'll pick the table that contains the rows you want to reference — in our case, the `profiles` table.
-
----
-
-###### 📌 Select Column to Reference
-
-Now choose the **column** in the target table you want to link to. Usually, this will be the `id` column from the `profiles` table, since `follower_id` and `followed_id` are meant to refer to user IDs.
-
----
-
-###### 🔄 On Update & Delete Actions
-
-Define what should happen to your row when the **referenced row** in the `profiles` table is updated or deleted:
-
-- **No Action** – Do nothing.
-- **Restrict** – Prevent deletion or update if it's still referenced.
-- **Set Null** – Set the referencing column to `NULL`.
-- **Set Default** – Set the referencing column to its default value.
-- **Cascade** – Automatically delete or update referencing rows.
-
-> 💡 For our `follows` table, we choose **CASCADE** for `ON DELETE`. That way, if a profile is deleted, any rows where it was a follower or being followed will also be cleaned up automatically.
-
-##### 🔠 Type
-
-Choose the appropriate data type (e.g., `UUID`, `Timestamp`, `Text`, etc.)
-
-##### 🧩 Default Value
-
-Use for auto-generated values.  
-Example: `followed_at` might default to `now()`.
-
-##### 🔑 Primary
-
-Check this box to make the column a primary key.  
-In this case, you’ll usually set a **composite primary key** on both `follower_id` and `followed_id`.
-
----
-
-#### 🔗 Foreign Keys
-
-This is where you define relationships between tables.
-
-##### Add a Foreign Key Relation
-
-For each of these:
-
-- `follower_id` → references `profiles.id`
-- `followed_id` → references `profiles.id`
-
-> These links help Supabase maintain data integrity and enable advanced queries with joins.
-
-Now what we can do is insert things into this table using the following typescript code:
-
-```typescript
-const handleFollow = async () => {
-	const { data, error } = await supabase
-		.from("follows")
-		.insert([{ follower_id: followerId, followed_id: followedId }]);
-
-	if (error) {
-		Alert.alert("Error", error.message);
-		console.error("Insert error:", error);
-		return;
-	}
-
-	Alert.alert("Success", "You are now following this user!");
-	console.log("Insert success:", data);
-};
-```
