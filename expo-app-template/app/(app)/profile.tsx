@@ -3,33 +3,45 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useAuth } from '@/context/authenticationContext';
-import { supabase } from '@/lib/utils/supabaseClient';
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 import { useEffect, useState } from 'react';
+import { Profile } from '@/db/schema';
+import { getProfileById } from '@/lib/api/profile';
 
 export default function ProfileScreen() {
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const router = useRouter();
-  const [profile, setProfile] = useState<{
-    username: string;
-    firstname: string;
-  } | null>(null);
+  const [profile, setProfile] = useState<Profile>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (session) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('username, firstname')
-          .eq('id', session.user.id)
-          .single();
+      if (!session?.user?.id) {
+        setError('No user session found.');
+        setIsLoading(false);
+        return;
+      }
 
-        if (error) {
-          Alert.alert('Error fetching profile', error.message);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await getProfileById(session.user.id);
+
+        if (!data) {
+          setError('Profile not found.');
+          Alert.alert('Error', 'Profile not found.');
         } else {
           setProfile(data);
         }
+      } catch (err: any) {
+        console.error('Unexpected error fetching profile:', err);
+        setError('Unexpected error occurred.');
+        Alert.alert('Error', 'Unexpected error occurred.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -37,7 +49,7 @@ export default function ProfileScreen() {
   }, [session]);
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await signOut();
     if (error) {
       Alert.alert('Error', error.message);
     } else {

@@ -699,37 +699,64 @@ Add these scripts to your `package.json`:
 }
 ```
 
-##### Step 6: Create Query Classes
+##### Step 6: Create Requests to Supabase backend
+As mentioned before we cannot actually use drizzle to query from the supabase in our app. This is because React native doesn't run PostgreSQL in the app. SO when we try to query the supabase with drizzle we cannot do it because we will then try to run postgreSQL, and that is not available.
 
-Create a queries file for your database operations in `lib/queries/profile.ts`:
+What we can do is use Drizzle to keep our database up to date. So we keep our schema using drizzle and we can then also keep track of the migrations. Now in order to create a request to the supabase we can do the following:
+
+- In the `lib` folder we create a folder called api. In this folder we will be puttin the files in which we make calls to the supabase backend
+- For example when we want to query the profile of a user we create a `profile.ts`
+```typescript
+import { supabase } from '@/lib/utils/supabaseClient';
+import { Alert } from 'react-native';
+import { Profile } from '@/db/schema'; // optional, depends on typing
+
+export async function getProfileById(userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select()
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    Alert.alert('Error fetching profile', error.message);
+    return null;
+  }
+
+  return data;
+}
+```
+
+Then in your pages you can call the functions like this:
 
 ```typescript
-import { db } from "@/db/drizzle";
-import { profiles } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import type { Profile, NewProfile } from "@/db/schema";
+const fetchProfile = async () => {
+      if (!session?.user?.id) {
+        setError('No user session found.');
+        setIsLoading(false);
+        return;
+      }
 
-export class ProfileQueries {
-	// Get profile by user ID
-	static async getProfile(
-		userId: string
-	): Promise<{ success: boolean; data?: Profile; error?: any }> {
-		try {
-			const result = await db
-				.select()
-				.from(profiles)
-				.where(eq(profiles.id, userId));
+      setIsLoading(true);
+      setError(null);
 
-			if (result.length === 0) {
-				return { success: true, data: undefined };
-			}
+      try {
+        const data = await getProfileById(session.user.id);
 
-			return { success: true, data: result[0] };
-		} catch (error) {
-			console.error("Error fetching profile:", error);
-			return { success: false, error };
-		}
-	}
+        if (!data) {
+          setError('Profile not found.');
+          Alert.alert('Error', 'Profile not found.');
+        } else {
+          setProfile(data);
+        }
+      } catch (err: any) {
+        console.error('Unexpected error fetching profile:', err);
+        setError('Unexpected error occurred.');
+        Alert.alert('Error', 'Unexpected error occurred.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 ```
 
 ##### Step 7: Generate Migrations
@@ -861,30 +888,6 @@ If you don't do this the user will continiously be redirected to the complete pr
 
 Now you can run any manual SQL by just inserting new migrations and adding them to the journal. The only problem is that when you want to insert a new trigger you also have to make a new migration. So you cannot just put the new trigger in the migration that we already ran. So it is handy to keep note of the triggers and the functions and policies by hand next to the migrations so that you know what the current state is
 
-##### Step 9: Use in Your App
-
-Now you can use your Drizzle queries in your components:
-
-```typescript
-import { ProfileQueries } from "@/lib/queries/profile";
-
-// Example usage in a component
-const handleCreateProfile = async () => {
-	const result = await ProfileQueries.createProfile({
-		id: userId,
-		username: "john_doe",
-		firstname: "John",
-		lastname: "Doe",
-		bio: "Hello world!",
-	});
-
-	if (result.success) {
-		console.log("Profile created:", result.data);
-	} else {
-		console.error("Error:", result.error);
-	}
-};
-```
 
 ##### 11. Creating Edge functions (optional)
 
@@ -973,6 +976,18 @@ npx supabase functions deploy hello-world
 Now it will first prompt you to log into your supabase account but then you can atually do deploy the function. Now what you can do is you can call this function using your postman or just in your app. You do have to provide authentication so that is why in your postman you do have to verify the session, so you can do this if you are balls deep into testing or just test it in your app directly
 
 **That's it!** Your Drizzle ORM is now fully set up and connected to your Supabase PostgreSQL database. You can now write type-safe database queries with full TypeScript support.
+
+#### Making a local database
+
+Now we have talked about the Supabase database, but what if you want to have a local database? This is possible by using SQLite. We will be using `SQlite` to create a local database that you can use in your app. This is useful for testing and development purposes. You can also use it in production if you want to have a local database. 
+
+An example of this is a screen time app in which you want to store the screen time data locally on the device. You can then use SQLite to store the data locally on the device.
+
+To get started, you need to install the following packages:
+
+```bash
+npx expo install expo-sqlite
+```
 
 #### Using the Authentication Context
 
